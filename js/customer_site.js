@@ -6,18 +6,6 @@ const CUSTOMER_SITES = {
     tyyszy: {
         api: 'https://www.tyyszy.com/api.php/provide/vod',
         name: '天翼云资源',
-    },
-    dyttzy: {
-        api: 'https://www.dyttzy.com/api.php/provide/vod',
-        name: '大洋天天资源',
-    },
-    bfzy: {
-        api: 'https://www.bfzy.tv/api.php/provide/vod',
-        name: '暴风资源',
-    },
-    ruyi: {
-        api: 'https://www.ruyizy.cc/api.php/provide/vod',
-        name: '如意资源',
     }
 };
 
