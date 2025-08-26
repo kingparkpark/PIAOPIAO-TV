@@ -23,15 +23,30 @@ async function searchByAPIAndKeyWord(apiId, query) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         
-        // 添加鉴权参数到代理URL
-        const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-            PROXY_URL + encodeURIComponent(apiUrl);
-        
-        const response = await fetch(proxiedUrl, {
-            headers: API_CONFIG.search.headers,
-            signal: controller.signal
-        });
+        // 尝试直接访问API，如果失败则使用代理
+        let response;
+        try {
+            // 首先尝试直接访问API
+            response = await fetch(apiUrl, {
+                headers: {
+                    ...API_CONFIG.search.headers,
+                    'Access-Control-Allow-Origin': '*'
+                },
+                mode: 'cors',
+                signal: controller.signal
+            });
+        } catch (directError) {
+            console.log(`直接访问失败，尝试代理: ${directError.message}`);
+            // 如果直接访问失败，尝试使用代理
+            const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
+                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
+                PROXY_URL + encodeURIComponent(apiUrl);
+            
+            response = await fetch(proxiedUrl, {
+                headers: API_CONFIG.search.headers,
+                signal: controller.signal
+            });
+        }
         
         clearTimeout(timeoutId);
         
@@ -74,15 +89,30 @@ async function searchByAPIAndKeyWord(apiId, query) {
                         const pageController = new AbortController();
                         const pageTimeoutId = setTimeout(() => pageController.abort(), 15000);
                         
-                        // 添加鉴权参数到代理URL
-                        const proxiedPageUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(pageUrl)) :
-                            PROXY_URL + encodeURIComponent(pageUrl);
-                        
-                        const pageResponse = await fetch(proxiedPageUrl, {
-                            headers: API_CONFIG.search.headers,
-                            signal: pageController.signal
-                        });
+                        // 尝试直接访问分页API，如果失败则使用代理
+                        let pageResponse;
+                        try {
+                            // 首先尝试直接访问API
+                            pageResponse = await fetch(pageUrl, {
+                                headers: {
+                                    ...API_CONFIG.search.headers,
+                                    'Access-Control-Allow-Origin': '*'
+                                },
+                                mode: 'cors',
+                                signal: pageController.signal
+                            });
+                        } catch (directError) {
+                            console.log(`分页直接访问失败，尝试代理: ${directError.message}`);
+                            // 如果直接访问失败，尝试使用代理
+                            const proxiedPageUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
+                                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(pageUrl)) :
+                                PROXY_URL + encodeURIComponent(pageUrl);
+                            
+                            pageResponse = await fetch(proxiedPageUrl, {
+                                headers: API_CONFIG.search.headers,
+                                signal: pageController.signal
+                            });
+                        }
                         
                         clearTimeout(pageTimeoutId);
                         
