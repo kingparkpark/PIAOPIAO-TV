@@ -269,6 +269,9 @@ function renderCustomAPIsList() {
         const detailLine = api.detail ? `<div class="text-xs text-gray-400 truncate">detail: ${api.detail}</div>` : '';
         apiItem.innerHTML = `
             <div class="flex items-center flex-1 min-w-0">
+                <input type="checkbox" id="custom_api_select_${index}" 
+                       class="form-checkbox h-3 w-3 text-green-600 mr-1 custom-api-select" 
+                       data-custom-index="${index}">
                 <input type="checkbox" id="custom_api_${index}" 
                        class="form-checkbox h-3 w-3 text-blue-600 mr-1 ${api.isAdult ? 'api-adult' : ''}" 
                        ${selectedAPIs.includes('custom_' + index) ? 'checked' : ''} 
@@ -282,12 +285,15 @@ function renderCustomAPIsList() {
                 </div>
             </div>
             <div class="flex items-center">
-                <button class="text-blue-500 hover:text-blue-700 text-xs px-1" onclick="editCustomApi(${index})">✎</button>
-                <button class="text-red-500 hover:text-red-700 text-xs px-1" onclick="removeCustomApi(${index})">✕</button>
+                <button class="text-green-500 hover:text-green-700 text-xs px-1" onclick="testSingleCustomApi(${index})" title="测试API">🔍</button>
+                <button class="text-blue-500 hover:text-blue-700 text-xs px-1" onclick="editCustomApi(${index})" title="编辑">✎</button>
+                <button class="text-red-500 hover:text-red-700 text-xs px-1" onclick="removeCustomApi(${index})" title="删除">✕</button>
             </div>
         `;
         container.appendChild(apiItem);
-        apiItem.querySelector('input').addEventListener('change', function () {
+        
+        // 为启用/禁用复选框添加事件监听器
+        apiItem.querySelector(`#custom_api_${index}`).addEventListener('change', function () {
             updateSelectedAPIs();
             checkAdultAPIsSelected();
         });
@@ -1545,3 +1551,288 @@ function saveStringAsFile(content, fileName) {
 }
 
 // 移除Node.js的require语句，因为这是在浏览器环境中运行的
+
+// 批量管理功能
+function toggleManagementPanel() {
+    const toolbar = document.getElementById('customApiToolbar');
+    const button = document.querySelector('[onclick="toggleManagementPanel()"]');
+    
+    if (toolbar.style.display === 'none' || !toolbar.style.display) {
+        toolbar.style.display = 'block';
+        button.textContent = '关闭管理';
+        button.className = 'px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700';
+    } else {
+        toolbar.style.display = 'none';
+        button.textContent = '管理面板';
+        button.className = 'px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700';
+        // 取消所有选择
+        document.querySelectorAll('.custom-api-select').forEach(cb => cb.checked = false);
+    }
+}
+
+// 批量选择功能
+function selectAllCustomApis() {
+    document.querySelectorAll('.custom-api-select').forEach(cb => cb.checked = true);
+}
+
+function deselectAllCustomApis() {
+    document.querySelectorAll('.custom-api-select').forEach(cb => cb.checked = false);
+}
+
+// 批量删除功能
+function deleteSelectedCustomApis() {
+    const selectedCheckboxes = document.querySelectorAll('.custom-api-select:checked');
+    if (selectedCheckboxes.length === 0) {
+        alert('请先选择要删除的API');
+        return;
+    }
+    
+    if (!confirm(`确定要删除选中的 ${selectedCheckboxes.length} 个自定义API吗？`)) {
+        return;
+    }
+    
+    // 收集要删除的索引（从大到小排序，避免删除时索引变化）
+    const indicesToDelete = Array.from(selectedCheckboxes)
+        .map(cb => parseInt(cb.dataset.customIndex))
+        .sort((a, b) => b - a);
+    
+    // 删除API
+    indicesToDelete.forEach(index => {
+        // 从selectedAPIs中移除
+        const customKey = 'custom_' + index;
+        const selectedIndex = selectedAPIs.indexOf(customKey);
+        if (selectedIndex > -1) {
+            selectedAPIs.splice(selectedIndex, 1);
+        }
+        
+        // 从customAPIs中移除
+        customAPIs.splice(index, 1);
+    });
+    
+    // 更新索引
+    selectedAPIs = selectedAPIs.map(api => {
+        if (api.startsWith('custom_')) {
+            const oldIndex = parseInt(api.split('_')[1]);
+            let newIndex = oldIndex;
+            indicesToDelete.forEach(deletedIndex => {
+                if (deletedIndex < oldIndex) {
+                    newIndex--;
+                }
+            });
+            return 'custom_' + newIndex;
+        }
+        return api;
+    });
+    
+    // 保存到localStorage
+    localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+    localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+    
+    // 重新渲染
+    renderCustomAPIsList();
+    updateSelectedApiCount();
+    checkAdultAPIsSelected();
+    
+    alert(`成功删除 ${indicesToDelete.length} 个自定义API`);
+}
+
+// 批量测试功能
+function testSelectedCustomApis() {
+    const selectedCheckboxes = document.querySelectorAll('.custom-api-select:checked');
+    if (selectedCheckboxes.length === 0) {
+        alert('请先选择要测试的API');
+        return;
+    }
+    
+    const testResults = document.getElementById('apiTestResults');
+    testResults.style.display = 'block';
+    testResults.innerHTML = '<h4 class="text-sm font-bold mb-2">API测试结果：</h4>';
+    
+    const indices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.customIndex));
+    
+    indices.forEach(async (index) => {
+        const api = customAPIs[index];
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'text-xs mb-1 p-1 bg-[#333] rounded';
+        resultDiv.innerHTML = `<span class="text-yellow-400">${api.name}</span>: 测试中...`;
+        testResults.appendChild(resultDiv);
+        
+        try {
+            const response = await fetch(api.url + '?wd=测试', { 
+                method: 'GET',
+                timeout: 5000 
+            });
+            
+            if (response.ok) {
+                resultDiv.innerHTML = `<span class="text-green-400">${api.name}</span>: ✅ 连接正常`;
+            } else {
+                resultDiv.innerHTML = `<span class="text-red-400">${api.name}</span>: ❌ HTTP ${response.status}`;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `<span class="text-red-400">${api.name}</span>: ❌ ${error.message}`;
+        }
+    });
+}
+
+// 单个API测试功能
+function testSingleCustomApi(index) {
+    const api = customAPIs[index];
+    const testResults = document.getElementById('apiTestResults');
+    testResults.style.display = 'block';
+    testResults.innerHTML = '<h4 class="text-sm font-bold mb-2">API测试结果：</h4>';
+    
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'text-xs mb-1 p-1 bg-[#333] rounded';
+    resultDiv.innerHTML = `<span class="text-yellow-400">${api.name}</span>: 测试中...`;
+    testResults.appendChild(resultDiv);
+    
+    fetch(api.url + '?wd=测试', { 
+        method: 'GET',
+        timeout: 5000 
+    })
+    .then(response => {
+        if (response.ok) {
+            resultDiv.innerHTML = `<span class="text-green-400">${api.name}</span>: ✅ 连接正常`;
+        } else {
+            resultDiv.innerHTML = `<span class="text-red-400">${api.name}</span>: ❌ HTTP ${response.status}`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<span class="text-red-400">${api.name}</span>: ❌ ${error.message}`;
+    });
+}
+
+// 导出自定义API
+function exportCustomApis() {
+    if (customAPIs.length === 0) {
+        alert('没有自定义API可以导出');
+        return;
+    }
+    
+    const exportData = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        apis: customAPIs
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `custom_apis_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    alert('自定义API已导出');
+}
+
+// 显示导入面板
+function showImportPanel() {
+    document.getElementById('importPanel').style.display = 'block';
+}
+
+// 隐藏导入面板
+function hideImportPanel() {
+    document.getElementById('importPanel').style.display = 'none';
+    document.getElementById('importFile').value = '';
+    document.getElementById('importText').value = '';
+}
+
+// 处理文件导入
+function handleFileImport() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('请选择文件');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importData = JSON.parse(e.target.result);
+            processImportData(importData);
+        } catch (error) {
+            alert('文件格式错误：' + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 处理文本导入
+function handleTextImport() {
+    const textInput = document.getElementById('importText');
+    const text = textInput.value.trim();
+    
+    if (!text) {
+        alert('请输入导入数据');
+        return;
+    }
+    
+    try {
+        const importData = JSON.parse(text);
+        processImportData(importData);
+    } catch (error) {
+        alert('数据格式错误：' + error.message);
+    }
+}
+
+// 处理导入数据
+function processImportData(importData) {
+    if (!importData.apis || !Array.isArray(importData.apis)) {
+        alert('导入数据格式错误：缺少apis数组');
+        return;
+    }
+    
+    let importCount = 0;
+    let skipCount = 0;
+    
+    importData.apis.forEach(api => {
+        // 验证API数据格式
+        if (!api.name || !api.url) {
+            skipCount++;
+            return;
+        }
+        
+        // 检查是否已存在相同的API
+        const exists = customAPIs.some(existing => 
+            existing.name === api.name || existing.url === api.url
+        );
+        
+        if (exists) {
+            skipCount++;
+            return;
+        }
+        
+        // 添加API
+        const newApi = {
+            name: api.name,
+            url: api.url,
+            detail: api.detail || '',
+            isAdult: api.isAdult || false
+        };
+        
+        customAPIs.push(newApi);
+        importCount++;
+    });
+    
+    if (importCount > 0) {
+        // 保存到localStorage
+        localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+        
+        // 重新渲染
+        renderCustomAPIsList();
+        updateSelectedApiCount();
+        
+        alert(`导入完成！成功导入 ${importCount} 个API，跳过 ${skipCount} 个重复或无效API`);
+    } else {
+        alert('没有新的API被导入');
+    }
+    
+    hideImportPanel();
+}
