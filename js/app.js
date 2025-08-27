@@ -14,7 +14,7 @@ let episodesReversed = false;
 // 分页相关变量
 let allResults = [];
 let currentPage = 1;
-let pageSize = 24;
+let pageSize = 16;
 let totalPages = 0;
 let paginatedResults = [];
 let searchTimeout = null;
@@ -962,26 +962,11 @@ function goToPage(page) {
 
 // 设置分页事件监听器
 function setupPaginationEventListeners() {
-    // 每页显示数量选择器
-    const pageSizeSelect = document.getElementById('pageSize');
-    if (pageSizeSelect) {
-        pageSizeSelect.addEventListener('change', function() {
-            pageSize = parseInt(this.value);
-            currentPage = 1; // 重置到第一页
-            totalPages = Math.ceil(allResults.length / pageSize);
-            
-            if (allResults.length > 0) {
-                renderCurrentPage();
-                renderPagination();
-            }
-        });
-    }
-    
     // 分页按钮事件
-    const firstPageBtn = document.getElementById('firstPage');
-    const prevPageBtn = document.getElementById('prevPage');
-    const nextPageBtn = document.getElementById('nextPage');
-    const lastPageBtn = document.getElementById('lastPage');
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
     
     if (firstPageBtn) {
         firstPageBtn.addEventListener('click', () => goToPage(1));
