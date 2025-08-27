@@ -11,6 +11,17 @@ let currentVideoTitle = '';
 // 全局变量用于倒序状态
 let episodesReversed = false;
 
+// 分页相关变量
+let allResults = [];
+let currentPage = 1;
+let pageSize = 24;
+let totalPages = 0;
+let paginatedResults = [];
+let searchTimeout = null;
+let isSearching = false;
+// searchCache 已在 cache.js 中定义
+let lastSearchKeyword = '';
+
 // 页面初始化
 document.addEventListener('DOMContentLoaded', function () {
     // 设置默认API选择（如果是第一次加载）
@@ -56,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 设置事件监听器
     setupEventListeners();
+    
+    // 设置分页事件监听器
+    setupPaginationEventListeners();
 
     // 初始检查成人API选中状态
     setTimeout(checkAdultAPIsSelected, 100);
@@ -617,7 +631,6 @@ function getCustomApiInfo(customApiIndex) {
 }
 
 // 搜索防抖变量
-let searchTimeout = null;
 let lastSearchQuery = '';
 let searchAbortController = null;
 
@@ -736,7 +749,24 @@ async function search() {
 }
 
 // 显示搜索结果的函数
-function displaySearchResults(allResults, query) {
+function displaySearchResults(results, query) {
+    // 保存全部结果到全局变量
+    allResults = results || [];
+    
+    // 处理搜索结果过滤：如果启用了黄色内容过滤，则过滤掉分类含有敏感内容的项目
+    const yellowFilterEnabled = localStorage.getItem('yellowFilterEnabled') === 'true';
+    if (yellowFilterEnabled) {
+        const banned = ['伦理片', '福利', '里番动漫', '门事件', '萝莉少女', '制服诱惑', '国产传媒', 'cosplay', '黑丝诱惑', '无码', '日本无码', '有码', '日本有码', 'SWAG', '网红主播', '色情片', '同性片', '福利视频', '福利片'];
+        allResults = allResults.filter(item => {
+            const typeName = item.type_name || '';
+            return !banned.some(keyword => typeName.includes(keyword));
+        });
+    }
+    
+    // 重置分页
+    currentPage = 1;
+    totalPages = Math.ceil(allResults.length / pageSize);
+    
     // 更新搜索结果计数
     const searchResultsCount = document.getElementById('searchResultsCount');
     if (searchResultsCount) {
@@ -768,6 +798,8 @@ function displaySearchResults(allResults, query) {
                 <p class="mt-1 text-sm text-gray-500">请尝试其他关键词或更换数据源</p>
             </div>
         `;
+        // 隐藏分页组件
+        document.getElementById('pagination').classList.add('hidden');
         return;
     }
 
@@ -788,18 +820,32 @@ function displaySearchResults(allResults, query) {
         // 如果更新URL失败，继续执行搜索
     }
 
-    // 处理搜索结果过滤：如果启用了黄色内容过滤，则过滤掉分类含有敏感内容的项目
-    const yellowFilterEnabled = localStorage.getItem('yellowFilterEnabled') === 'true';
-    if (yellowFilterEnabled) {
-        const banned = ['伦理片', '福利', '里番动漫', '门事件', '萝莉少女', '制服诱惑', '国产传媒', 'cosplay', '黑丝诱惑', '无码', '日本无码', '有码', '日本有码', 'SWAG', '网红主播', '色情片', '同性片', '福利视频', '福利片'];
-        allResults = allResults.filter(item => {
-            const typeName = item.type_name || '';
-            return !banned.some(keyword => typeName.includes(keyword));
-        });
-    }
+    // 渲染当前页的结果
+    renderCurrentPage();
+    
+    // 渲染分页组件
+    renderPagination();
+}
 
+// 渲染当前页的搜索结果
+function renderCurrentPage() {
+    const resultsDiv = document.getElementById('results');
+    
+    // 计算当前页的起始和结束索引
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, allResults.length);
+    
+    // 获取当前页的结果
+    paginatedResults = allResults.slice(startIndex, endIndex);
+    
+    // 更新页面信息显示
+    const currentPageInfo = document.getElementById('currentPageInfo');
+    if (currentPageInfo) {
+        currentPageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+    }
+    
     // 添加XSS保护，使用textContent和属性转义
-    const safeResults = allResults.map(item => {
+    const safeResults = paginatedResults.map(item => {
         const safeId = item.vod_id ? item.vod_id.toString().replace(/[^\w-]/g, '') : '';
         const safeName = (item.vod_name || '').toString()
             .replace(/</g, '&lt;')
@@ -858,6 +904,100 @@ function displaySearchResults(allResults, query) {
     }).join('');
 
     resultsDiv.innerHTML = safeResults;
+}
+
+// 渲染分页组件
+function renderPagination() {
+    const paginationDiv = document.getElementById('pagination');
+    const pageNumbersDiv = document.getElementById('pageNumbers');
+    
+    if (totalPages <= 1) {
+        paginationDiv.classList.add('hidden');
+        return;
+    }
+    
+    paginationDiv.classList.remove('hidden');
+    
+    // 更新按钮状态
+    document.getElementById('firstPage').disabled = currentPage === 1;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages;
+    document.getElementById('lastPage').disabled = currentPage === totalPages;
+    
+    // 生成页码按钮
+    let pageNumbers = '';
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // 调整起始页
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage;
+        pageNumbers += `
+            <button class="px-3 py-2 ${isActive ? 'bg-blue-600 text-white' : 'bg-[#222] hover:bg-[#333]'} border border-[#333] hover:border-white rounded transition-colors" 
+                    onclick="goToPage(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    pageNumbersDiv.innerHTML = pageNumbers;
+}
+
+// 跳转到指定页面
+function goToPage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    
+    currentPage = page;
+    renderCurrentPage();
+    renderPagination();
+    
+    // 滚动到结果区域顶部
+    document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 设置分页事件监听器
+function setupPaginationEventListeners() {
+    // 每页显示数量选择器
+    const pageSizeSelect = document.getElementById('pageSize');
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', function() {
+            pageSize = parseInt(this.value);
+            currentPage = 1; // 重置到第一页
+            totalPages = Math.ceil(allResults.length / pageSize);
+            
+            if (allResults.length > 0) {
+                renderCurrentPage();
+                renderPagination();
+            }
+        });
+    }
+    
+    // 分页按钮事件
+    const firstPageBtn = document.getElementById('firstPage');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const lastPageBtn = document.getElementById('lastPage');
+    
+    if (firstPageBtn) {
+        firstPageBtn.addEventListener('click', () => goToPage(1));
+    }
+    
+    if (prevPageBtn) {
+        prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
+    }
+    
+    if (nextPageBtn) {
+        nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
+    }
+    
+    if (lastPageBtn) {
+        lastPageBtn.addEventListener('click', () => goToPage(totalPages));
+    }
 }
 
 // 切换清空按钮的显示状态
