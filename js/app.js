@@ -1,5 +1,5 @@
 // 全局变量
-let selectedAPIs = JSON.parse(localStorage.getItem('selectedAPIs') || '["dyttzy", "ruyi", "bfzy", "tyyszy"]'); // 默认选中资源
+let selectedAPIs = JSON.parse(localStorage.getItem('selectedAPIs') || '[]'); // 默认选中资源
 let customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]'); // 存储自定义API列表
 
 // 添加当前播放的集数索引
@@ -26,8 +26,8 @@ let lastSearchKeyword = '';
 document.addEventListener('DOMContentLoaded', function () {
     // 设置默认API选择（如果是第一次加载）
     if (!localStorage.getItem('hasInitializedDefaults')) {
-        // 默认选中资源
-        selectedAPIs = ["tyyszy", "bfzy", "dyttzy", "ruyi"];
+        // 默认选中所有非成人API资源
+        selectedAPIs = Object.keys(API_SITES).filter(apiKey => !API_SITES[apiKey].adult);
         localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
 
         // 默认选中过滤开关
@@ -39,6 +39,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 标记已初始化默认值
         localStorage.setItem('hasInitializedDefaults', 'true');
+    } else {
+        // 对于已经初始化过的用户，检查并添加新的API源
+        const allNonAdultAPIs = Object.keys(API_SITES).filter(apiKey => !API_SITES[apiKey].adult);
+        const currentSelectedAPIs = JSON.parse(localStorage.getItem('selectedAPIs') || '[]');
+        
+        // 找出新增的API源（不在当前选中列表中的非成人API）
+        const newAPIs = allNonAdultAPIs.filter(apiKey => !currentSelectedAPIs.includes(apiKey));
+        
+        // 如果有新的API源，自动添加到选中列表
+        if (newAPIs.length > 0) {
+            selectedAPIs = [...currentSelectedAPIs, ...newAPIs];
+            localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+            console.log(`自动添加了 ${newAPIs.length} 个新的API源:`, newAPIs);
+        } else {
+            selectedAPIs = currentSelectedAPIs;
+        }
     }
 
     // 初始化API复选框
