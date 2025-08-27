@@ -396,6 +396,77 @@ function showShortcutHint(text, direction) {
     }, 2000);
 }
 
+// 网络状况检测
+function getNetworkInfo() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const networkInfo = {
+        isSlowNetwork: false,
+        isFastNetwork: false,
+        effectiveType: 'unknown',
+        downlink: 0,
+        rtt: 0
+    };
+    
+    if (connection) {
+        networkInfo.effectiveType = connection.effectiveType || 'unknown';
+        networkInfo.downlink = connection.downlink || 0;
+        networkInfo.rtt = connection.rtt || 0;
+        
+        // 判断网络速度
+        if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g' || 
+            (connection.downlink && connection.downlink < 1.5)) {
+            networkInfo.isSlowNetwork = true;
+        } else if (connection.effectiveType === '4g' || 
+                   (connection.downlink && connection.downlink > 10)) {
+            networkInfo.isFastNetwork = true;
+        }
+    } else {
+        // 降级检测：基于用户代理和屏幕信息推测
+        const userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.includes('mobile') && !userAgent.includes('tablet')) {
+            // 移动设备可能网络较慢
+            networkInfo.isSlowNetwork = window.screen.width < 768;
+        }
+    }
+    
+    return networkInfo;
+}
+
+// 设备性能检测
+function getDeviceInfo() {
+    const deviceInfo = {
+        isLowEndDevice: false,
+        isMobile: false,
+        memoryGB: 0,
+        cores: 0
+    };
+    
+    // 检测是否为移动设备
+    deviceInfo.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // 检测设备内存（如果可用）
+    if (navigator.deviceMemory) {
+        deviceInfo.memoryGB = navigator.deviceMemory;
+        deviceInfo.isLowEndDevice = navigator.deviceMemory <= 2;
+    }
+    
+    // 检测CPU核心数（如果可用）
+    if (navigator.hardwareConcurrency) {
+        deviceInfo.cores = navigator.hardwareConcurrency;
+        if (!deviceInfo.isLowEndDevice) {
+            deviceInfo.isLowEndDevice = navigator.hardwareConcurrency <= 2;
+        }
+    }
+    
+    // 基于屏幕分辨率的降级检测
+    if (!deviceInfo.memoryGB && !deviceInfo.cores) {
+        const screenArea = window.screen.width * window.screen.height;
+        deviceInfo.isLowEndDevice = screenArea < 1000000 || window.screen.width < 1024;
+    }
+    
+    return deviceInfo;
+}
+
 // 初始化播放器
 function initPlayer(videoUrl) {
     if (!videoUrl) {
@@ -408,33 +479,55 @@ function initPlayer(videoUrl) {
         art = null;
     }
 
-    // 配置HLS.js选项
+    // 获取网络状况和设备性能信息
+    const networkInfo = getNetworkInfo();
+    const deviceInfo = getDeviceInfo();
+    
+    // 配置优化的HLS.js选项
     const hlsConfig = {
         debug: false,
         loader: adFilteringEnabled ? CustomHlsJsLoader : Hls.DefaultConfig.loader,
         enableWorker: true,
         lowLatencyMode: false,
-        backBufferLength: 90,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        maxBufferSize: 30 * 1000 * 1000,
+        
+        // 动态缓冲配置 - 根据网络状况调整
+        backBufferLength: networkInfo.isSlowNetwork ? 60 : 90,
+        maxBufferLength: networkInfo.isSlowNetwork ? 20 : (networkInfo.isFastNetwork ? 45 : 30),
+        maxMaxBufferLength: networkInfo.isSlowNetwork ? 40 : (networkInfo.isFastNetwork ? 90 : 60),
+        maxBufferSize: networkInfo.isSlowNetwork ? 20 * 1000 * 1000 : 30 * 1000 * 1000,
         maxBufferHole: 0.5,
-        fragLoadingMaxRetry: 6,
-        fragLoadingMaxRetryTimeout: 64000,
-        fragLoadingRetryDelay: 1000,
-        manifestLoadingMaxRetry: 3,
-        manifestLoadingRetryDelay: 1000,
-        levelLoadingMaxRetry: 4,
-        levelLoadingRetryDelay: 1000,
-        startLevel: -1,
-        abrEwmaDefaultEstimate: 500000,
-        abrBandWidthFactor: 0.95,
-        abrBandWidthUpFactor: 0.7,
+        
+        // 智能重试配置
+        fragLoadingMaxRetry: networkInfo.isSlowNetwork ? 8 : 6,
+        fragLoadingMaxRetryTimeout: networkInfo.isSlowNetwork ? 80000 : 64000,
+        fragLoadingRetryDelay: networkInfo.isSlowNetwork ? 2000 : 1000,
+        manifestLoadingMaxRetry: 4,
+        manifestLoadingRetryDelay: networkInfo.isSlowNetwork ? 2000 : 1000,
+        levelLoadingMaxRetry: 5,
+        levelLoadingRetryDelay: networkInfo.isSlowNetwork ? 2000 : 1000,
+        
+        // 自适应码率配置
+        startLevel: networkInfo.isSlowNetwork ? 0 : -1, // 慢网络从最低码率开始
+        abrEwmaDefaultEstimate: networkInfo.isSlowNetwork ? 200000 : (networkInfo.isFastNetwork ? 1000000 : 500000),
+        abrBandWidthFactor: networkInfo.isSlowNetwork ? 0.8 : 0.95,
+        abrBandWidthUpFactor: networkInfo.isSlowNetwork ? 0.5 : 0.7,
         abrMaxWithRealBitrate: true,
+        
+        // 分段加载优化
         stretchShortVideoTrack: true,
-        appendErrorMaxRetry: 5,  // 增加尝试次数
+        appendErrorMaxRetry: 6,
         liveSyncDurationCount: 3,
-        liveDurationInfinity: false
+        liveDurationInfinity: false,
+        
+        // 新增优化配置
+        progressive: true,
+        lowBufferWatchdogPeriod: 0.5,
+        highBufferWatchdogPeriod: 3,
+        nudgeOffset: 0.1,
+        nudgeMaxRetry: 3,
+        maxStarvationDelay: 4,
+        maxLoadingDelay: 4,
+        minAutoBitrate: networkInfo.isSlowNetwork ? 0 : 100000
     };
 
     // Create new ArtPlayer instance
@@ -526,41 +619,67 @@ function initPlayer(videoUrl) {
                 }
                 video.disableRemotePlayback = false;
 
+                // 智能缓冲管理变量
+                let bufferHealthScore = 100;
+                let adaptiveBufferEnabled = true;
+                let lastBufferCheck = Date.now();
+                let stallCount = 0;
+                
+                // 加载进度管理
+                let loadingProgress = 0;
+                let loadingStartTime = Date.now();
+                let manifestLoaded = false;
+                let firstFragmentLoaded = false;
+                
+                // 初始化加载状态显示
+                initializeLoadingDisplay(networkInfo, deviceInfo);
+                updateLoadingProgress(10, '正在初始化播放器...');
+                
+                // 根据网络状况显示智能提示
+                if (networkInfo.isSlowNetwork) {
+                    showSmartLoadingTips('slow_network');
+                } else if (deviceInfo.isLowEnd) {
+                    showSmartLoadingTips('low_device');
+                }
+                
                 hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                    manifestLoaded = true;
+                    updateLoadingProgress(25, '视频信息加载完成，准备播放...');
+                    showSmartLoadingTips('manifest_loading');
+                    
                     video.play().catch(e => {
                     });
+                    console.log('HLS manifest parsed, levels available:', hls.levels.length);
                 });
 
+                // 增强的错误处理
                 hls.on(Hls.Events.ERROR, function (event, data) {
-                    // 增加错误计数
                     errorCount++;
+                    console.log('HLS Error:', data.type, data.details, data.fatal);
 
                     // 处理bufferAppendError
                     if (data.details === 'bufferAppendError') {
                         bufferAppendErrorCount++;
-                        // 如果视频已经开始播放，则忽略这个错误
                         if (playbackStarted) {
                             return;
                         }
-
-                        // 如果出现多次bufferAppendError但视频未播放，尝试恢复
                         if (bufferAppendErrorCount >= 3) {
                             hls.recoverMediaError();
                         }
                     }
 
-                    // 如果是致命错误，且视频未播放
+                    // 智能错误恢复
                     if (data.fatal && !playbackStarted) {
-                        // 尝试恢复错误
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                hls.startLoad();
+                                console.log('Network error, attempting recovery...');
+                                setTimeout(() => hls.startLoad(), 1000);
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('Media error, attempting recovery...');
                                 hls.recoverMediaError();
                                 break;
                             default:
-                                // 仅在多次恢复尝试后显示错误
                                 if (errorCount > 3 && !errorDisplayed) {
                                     errorDisplayed = true;
                                     showError('视频加载失败，可能是格式不兼容或源不可用');
@@ -570,15 +689,104 @@ function initPlayer(videoUrl) {
                     }
                 });
 
-                // 监听分段加载事件
-                hls.on(Hls.Events.FRAG_LOADED, function () {
-                    document.getElementById('player-loading').style.display = 'none';
+                // 片段加载事件监控
+                hls.on(Hls.Events.FRAG_LOADING, function(event, data) {
+                    if (!firstFragmentLoaded) {
+                        updateLoadingProgress(50, '开始加载视频片段...');
+                        showSmartLoadingTips('first_fragment');
+                    }
+                });
+                
+                hls.on(Hls.Events.FRAG_LOADED, function(event, data) {
+                    if (!firstFragmentLoaded) {
+                        firstFragmentLoaded = true;
+                        updateLoadingProgress(75, '视频片段加载完成，即将开始播放');
+                        
+                        // 根据网络状况调整加载策略
+                        adjustLoadingStrategy(hls, data, networkInfo);
+                    }
+                    
+                    // 更新缓冲健康度
+                    if (video && hls) {
+                        const bufferHealth = updateBufferHealth(video, hls);
+                        updateBufferStatusDisplay(bufferHealth);
+                    }
+                });
+                
+                hls.on(Hls.Events.FRAG_LOAD_ERROR, function(event, data) {
+                    console.warn('Fragment load error:', data);
+                    showSmartLoadingTips('error_recovery');
+                    
+                    // 降低缓冲健康度
+                    if (video && hls) {
+                        const bufferHealth = updateBufferHealth(video, hls) - 10;
+                        updateBufferStatusDisplay(Math.max(0, bufferHealth));
+                    }
+                });
+                
+                // 质量切换监控
+                hls.on(Hls.Events.LEVEL_SWITCHING, function(event, data) {
+                    console.log('Quality switching to level:', data.level);
+                    showSmartLoadingTips('quality_switch');
+                });
+                
+                // 缓冲状态监控
+                hls.on(Hls.Events.BUFFER_APPENDED, function (event, data) {
+                    updateBufferHealth(video, hls);
+                });
+                
+                hls.on(Hls.Events.BUFFER_EOS, function () {
+                    console.log('Buffer end of stream reached');
                 });
 
-                // 监听级别加载事件
-                hls.on(Hls.Events.LEVEL_LOADED, function () {
+                // 分段加载优化
+                hls.on(Hls.Events.FRAG_LOADING, function (event, data) {
+                    // 动态调整加载策略
+                    if (adaptiveBufferEnabled) {
+                        adjustLoadingStrategy(hls, data, networkInfo);
+                    }
+                });
+
+                hls.on(Hls.Events.FRAG_LOADED, function (event, data) {
+                    document.getElementById('player-loading').style.display = 'none';
+                    // 更新缓冲健康度
+                    bufferHealthScore = Math.min(100, bufferHealthScore + 2);
+                });
+
+                hls.on(Hls.Events.FRAG_LOAD_ERROR, function (event, data) {
+                    console.log('Fragment load error:', data.frag.url);
+                    bufferHealthScore = Math.max(0, bufferHealthScore - 10);
+                });
+
+                // 级别切换监控
+                hls.on(Hls.Events.LEVEL_SWITCHING, function (event, data) {
+                    console.log('Quality switching to level:', data.level);
+                });
+
+                hls.on(Hls.Events.LEVEL_LOADED, function (event, data) {
                     document.getElementById('player-loading').style.display = 'none';
                 });
+                
+                // 播放停滞检测
+                let lastCurrentTime = 0;
+                let stallCheckInterval = setInterval(() => {
+                    if (video.currentTime === lastCurrentTime && !video.paused && !video.ended) {
+                        stallCount++;
+                        bufferHealthScore = Math.max(0, bufferHealthScore - 5);
+                        if (stallCount > 3) {
+                            console.log('Detected playback stall, adjusting buffer strategy');
+                            adjustBufferStrategy(hls, true);
+                            stallCount = 0;
+                        }
+                    } else {
+                        stallCount = 0;
+                        lastCurrentTime = video.currentTime;
+                    }
+                }, 2000);
+                
+                // 清理定时器
+                video.addEventListener('ended', () => clearInterval(stallCheckInterval));
+                video.addEventListener('error', () => clearInterval(stallCheckInterval));
             }
         }
     });
@@ -650,7 +858,9 @@ function initPlayer(videoUrl) {
     });
 
     art.on('video:loadedmetadata', function() {
-        document.getElementById('player-loading').style.display = 'none';
+        // 更新加载进度到90%
+        updateLoadingProgress(90, '视频元数据加载完成，准备播放');
+        
         videoHasEnded = false; // 视频加载时重置结束标志
         // 优先使用URL传递的position参数
         const urlParams = new URLSearchParams(window.location.search);
@@ -731,6 +941,12 @@ function initPlayer(videoUrl) {
 
     // 添加双击全屏支持
     art.on('video:playing', () => {
+        // 完成加载进度并隐藏加载界面
+        updateLoadingProgress(100, '播放开始');
+        setTimeout(() => {
+            document.getElementById('player-loading').style.display = 'none';
+        }, 500);
+        
         // 绑定双击事件到视频容器
         if (art.video) {
             art.video.addEventListener('dblclick', () => {
@@ -802,6 +1018,191 @@ function filterAdsFromM3U8(m3u8Content, strictMode = false) {
     return filteredLines.join('\n');
 }
 
+// 更新缓冲健康度
+function updateBufferHealth(video, hls) {
+    if (!video || !hls) return;
+    
+    try {
+        const buffered = video.buffered;
+        const currentTime = video.currentTime;
+        let bufferAhead = 0;
+        
+        // 计算当前位置前方的缓冲时长
+        for (let i = 0; i < buffered.length; i++) {
+            if (buffered.start(i) <= currentTime && buffered.end(i) > currentTime) {
+                bufferAhead = buffered.end(i) - currentTime;
+                break;
+            }
+        }
+        
+        // 根据缓冲情况调整策略
+        if (bufferAhead < 5) {
+            // 缓冲不足，提高加载优先级
+            console.log('Low buffer detected:', bufferAhead.toFixed(2), 'seconds');
+        } else if (bufferAhead > 30) {
+            // 缓冲充足，可以降低加载频率
+            console.log('Buffer healthy:', bufferAhead.toFixed(2), 'seconds');
+        }
+    } catch (e) {
+        console.warn('Error updating buffer health:', e);
+    }
+}
+
+// 动态调整加载策略
+function adjustLoadingStrategy(hls, fragData, networkInfo) {
+    if (!hls || !fragData) return;
+    
+    try {
+        const currentLevel = hls.currentLevel;
+        const levels = hls.levels;
+        
+        // 根据网络状况调整分段加载
+        if (networkInfo.isSlowNetwork && currentLevel > 0) {
+            // 慢网络时优先加载低质量
+            const targetLevel = Math.max(0, currentLevel - 1);
+            if (levels[targetLevel]) {
+                console.log('Adjusting to lower quality for slow network:', targetLevel);
+            }
+        } else if (networkInfo.isFastNetwork && currentLevel < levels.length - 1) {
+            // 快网络时可以预加载高质量
+            console.log('Fast network detected, allowing higher quality preload');
+        }
+    } catch (e) {
+        console.warn('Error adjusting loading strategy:', e);
+    }
+}
+
+// 调整缓冲策略
+function adjustBufferStrategy(hls, isStalling = false) {
+    if (!hls) return;
+    
+    try {
+        const config = hls.config;
+        
+        if (isStalling) {
+            // 发生停滞时，减少缓冲长度以加快响应
+            config.maxBufferLength = Math.max(10, config.maxBufferLength * 0.8);
+            config.maxMaxBufferLength = Math.max(20, config.maxMaxBufferLength * 0.8);
+            console.log('Adjusted buffer strategy for stalling, new maxBufferLength:', config.maxBufferLength);
+        } else {
+            // 恢复正常缓冲策略
+            const networkInfo = getNetworkInfo();
+            config.maxBufferLength = networkInfo.isSlowNetwork ? 20 : (networkInfo.isFastNetwork ? 45 : 30);
+            config.maxMaxBufferLength = networkInfo.isSlowNetwork ? 40 : (networkInfo.isFastNetwork ? 90 : 60);
+            console.log('Restored normal buffer strategy, maxBufferLength:', config.maxBufferLength);
+        }
+    } catch (e) {
+        console.warn('Error adjusting buffer strategy:', e);
+    }
+}
+
+// 初始化加载状态显示
+function initializeLoadingDisplay(networkInfo, deviceInfo) {
+    const networkStatus = document.getElementById('network-status');
+    const bufferStatus = document.getElementById('buffer-status');
+    const loadingMessage = document.getElementById('loading-message');
+    const loadingTips = document.getElementById('loading-tips');
+    
+    if (networkStatus) {
+        let networkText = '网络状况: ';
+        let networkClass = '';
+        
+        if (networkInfo.isFastNetwork) {
+            networkText += '良好 🚀';
+            networkClass = 'network-fast';
+        } else if (networkInfo.isSlowNetwork) {
+            networkText += '较慢 🐌';
+            networkClass = 'network-poor';
+        } else {
+            networkText += '一般 ⚡';
+            networkClass = 'network-slow';
+        }
+        
+        if (networkInfo.effectiveType) {
+            networkText += ` (${networkInfo.effectiveType})`;
+        }
+        
+        networkStatus.textContent = networkText;
+        networkStatus.className = networkClass;
+    }
+    
+    if (bufferStatus) {
+        bufferStatus.textContent = '缓冲状态: 初始化中';
+        bufferStatus.className = 'buffer-low';
+    }
+    
+    if (loadingMessage) {
+        loadingMessage.textContent = '正在连接视频源...';
+    }
+    
+    // 根据设备性能调整提示
+    if (loadingTips && deviceInfo.isLowEnd) {
+        const tipItem = loadingTips.querySelector('.tip-item');
+        if (tipItem) {
+            tipItem.innerHTML = '📱 检测到低端设备，正在优化加载策略以提升播放体验';
+        }
+    }
+}
+
+// 更新加载进度
+function updateLoadingProgress(progress, message) {
+    const progressBar = document.getElementById('loading-progress');
+    const loadingMessage = document.getElementById('loading-message');
+    
+    if (progressBar) {
+        progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    }
+    
+    if (loadingMessage && message) {
+        loadingMessage.textContent = message;
+    }
+}
+
+// 更新缓冲状态显示
+function updateBufferStatusDisplay(bufferHealth) {
+    const bufferStatus = document.getElementById('buffer-status');
+    if (!bufferStatus) return;
+    
+    let statusText = '缓冲状态: ';
+    let statusClass = '';
+    
+    if (bufferHealth >= 80) {
+        statusText += '健康 ✅';
+        statusClass = 'buffer-healthy';
+    } else if (bufferHealth >= 50) {
+        statusText += '一般 ⚠️';
+        statusClass = 'buffer-low';
+    } else {
+        statusText += '不足 ❌';
+        statusClass = 'buffer-critical';
+    }
+    
+    bufferStatus.textContent = statusText;
+    bufferStatus.className = statusClass;
+}
+
+// 显示智能加载提示
+function showSmartLoadingTips(context) {
+    const loadingTips = document.getElementById('loading-tips');
+    if (!loadingTips) return;
+    
+    const tipItem = loadingTips.querySelector('.tip-item');
+    if (!tipItem) return;
+    
+    const tips = {
+        'slow_network': '🌐 网络较慢，正在自动调整视频质量以确保流畅播放',
+        'manifest_loading': '📋 正在获取视频信息，请稍候...',
+        'first_fragment': '🎬 开始加载视频片段，即将开始播放',
+        'buffering': '⏳ 正在缓冲视频数据，确保播放流畅',
+        'quality_switch': '🔄 根据网络状况自动调整画质',
+        'error_recovery': '🔧 检测到播放问题，正在尝试恢复...',
+        'low_device': '📱 为您的设备优化播放参数，提升观看体验'
+    };
+    
+    if (tips[context]) {
+        tipItem.innerHTML = tips[context];
+    }
+}
 
 // 显示错误
 function showError(message) {

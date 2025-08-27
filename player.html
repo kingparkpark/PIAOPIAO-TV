@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.json">
 
     <script src="libs/tailwindcss.min.js"></script>
-    <script src="js/version-check.js"></script>
+    <!-- <script src="js/version-check.js"></script> -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/player.css">
     
@@ -70,7 +70,19 @@
                 </div>
                 <div class="loading-container" id="player-loading" style="display: none;">
                     <div class="loading-spinner"></div>
-                    <div>正在加载视频...</div>
+                    <div id="loading-message">正在加载视频...</div>
+                    <div class="loading-progress-container">
+                        <div class="loading-progress-bar">
+                            <div class="loading-progress-fill" id="loading-progress"></div>
+                        </div>
+                        <div class="loading-stats" id="loading-stats">
+                            <span id="network-status">检测网络状况...</span>
+                            <span id="buffer-status">缓冲状态: 准备中</span>
+                        </div>
+                    </div>
+                    <div class="loading-tips" id="loading-tips">
+                        <div class="tip-item">💡 提示：视频加载时间取决于网络状况和视频源质量</div>
+                    </div>
                 </div>
                 <div class="error-container" id="error">
                     <div class="error-icon">⚠️</div>
