@@ -39,6 +39,19 @@ const CUSTOMER_SITES = {
     haiwaikan: {
         api: 'https://haiwaikan.com/api.php/provide/vod',
         name: '海外看资源',
+    },
+    // 来自GitHub Gist的新增API资源
+    tangrenjie: {
+        api: 'https://www.tangrenjie.tv/api.php/provide/vod',
+        name: '唐人街影视',
+    },
+    tiankong2: {
+        api: 'http://vipmv.cc/api.php/provide/vod',
+        name: '天堂资源',
+    },
+    if101demo: {
+        api: 'https://demo.if101.tv/api.php/provide/vod',
+        name: 'IF101演示',
     }
 };
 

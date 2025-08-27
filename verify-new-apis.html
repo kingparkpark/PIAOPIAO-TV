@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>验证新添加的API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .api-test {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .api-test.success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .api-test.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .api-test.testing {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        .api-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .api-url {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .api-status {
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>验证新添加的API资源</h1>
+        
+        <button onclick="testNewAPIs()">测试新添加的API</button>
+        <button onclick="clearResults()">清空结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // 新添加的API列表
+        const newAPIs = [
+            {
+                name: '唐人街影视',
+                api: 'https://www.tangrenjie.tv/api.php/provide/vod',
+                key: 'tangrenjie'
+            },
+            {
+                name: '天堂资源',
+                api: 'http://vipmv.cc/api.php/provide/vod',
+                key: 'tiankong2'
+            },
+            {
+                name: 'IF101演示',
+                api: 'https://demo.if101.tv/api.php/provide/vod',
+                key: 'if101demo'
+            }
+        ];
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function createAPITestElement(api) {
+            const div = document.createElement('div');
+            div.className = 'api-test';
+            div.id = `test-${api.key}`;
+            
+            div.innerHTML = `
+                <div class="api-name">${api.name}</div>
+                <div class="api-url">${api.api}</div>
+                <div class="api-status" id="status-${api.key}">⏳ 等待测试</div>
+            `;
+            
+            return div;
+        }
+
+        function updateAPIStatus(apiKey, status, message) {
+            const element = document.getElementById(`test-${apiKey}`);
+            const statusElement = document.getElementById(`status-${apiKey}`);
+            
+            if (element && statusElement) {
+                element.className = `api-test ${status}`;
+                
+                let statusText = '';
+                switch(status) {
+                    case 'testing':
+                        statusText = '🔄 测试中...';
+                        break;
+                    case 'success':
+                        statusText = `✅ 可用 - ${message}`;
+                        break;
+                    case 'error':
+                        statusText = `❌ 不可用 - ${message}`;
+                        break;
+                }
+                
+                statusElement.textContent = statusText;
+            }
+        }
+
+        async function testAPI(api) {
+            updateAPIStatus(api.key, 'testing');
+            
+            try {
+                // 构建测试URL
+                const testUrl = `/api/proxy?url=${encodeURIComponent(api.api + '?ac=videolist&t=1&pg=1')}`;
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    timeout: 10000
+                });
+                
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    let data;
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        data = await response.text();
+                    }
+                    
+                    // 检查响应内容
+                    let isValid = false;
+                    let dataCount = 0;
+                    
+                    if (typeof data === 'object' && data !== null) {
+                        if (data.list && Array.isArray(data.list)) {
+                            dataCount = data.list.length;
+                            isValid = dataCount > 0;
+                        } else if (data.code !== undefined) {
+                            isValid = data.code === 1;
+                        }
+                    } else if (typeof data === 'string') {
+                        if (data.includes('<rss') || data.includes('<list>') || data.includes('<video>')) {
+                            isValid = true;
+                            const matches = data.match(/<video>/g);
+                            dataCount = matches ? matches.length : 0;
+                        }
+                    }
+                    
+                    if (isValid) {
+                        updateAPIStatus(api.key, 'success', `数据条目: ${dataCount}`);
+                    } else {
+                        updateAPIStatus(api.key, 'error', '响应格式无效或无数据');
+                    }
+                } else {
+                    updateAPIStatus(api.key, 'error', `HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                updateAPIStatus(api.key, 'error', error.message);
+            }
+        }
+
+        async function testNewAPIs() {
+            const button = document.querySelector('button');
+            button.disabled = true;
+            
+            clearResults();
+            const resultsEl = document.getElementById('results');
+            
+            // 创建测试元素
+            newAPIs.forEach(api => {
+                resultsEl.appendChild(createAPITestElement(api));
+            });
+            
+            // 逐个测试API
+            for (const api of newAPIs) {
+                await testAPI(api);
+                // 添加延迟
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            button.disabled = false;
+        }
+    </script>
+</body>
+</html>
