@@ -708,22 +708,18 @@ async function search() {
         // 保存搜索历史
         saveSearchHistory(query);
 
-        // 从所有选中的API源搜索 - 优化并发控制
+        // 从所有选中的API源搜索 - 修复API源和结果对应关系
         let allResults = [];
         const maxConcurrent = 3; // 限制并发数量
-        const searchPromises = [];
         
-        // 分批处理API请求
-        for (let i = 0; i < selectedAPIs.length; i += maxConcurrent) {
-            const batch = selectedAPIs.slice(i, i + maxConcurrent);
-            const batchPromises = batch.map(apiId => 
-                searchByAPIAndKeyWord(apiId, query)
-            );
-            searchPromises.push(...batchPromises);
-        }
+        // 创建带有API ID信息的搜索请求
+        const searchPromises = selectedAPIs.map(apiId => ({
+            apiId,
+            promise: searchByAPIAndKeyWord(apiId, query)
+        }));
 
         // 等待所有搜索请求完成
-        const resultsArray = await Promise.allSettled(searchPromises);
+        const resultsArray = await Promise.allSettled(searchPromises.map(item => item.promise));
 
         // 统计搜索结果
         let successfulAPIs = 0;
@@ -733,7 +729,7 @@ async function search() {
         // 合并所有成功的结果
         const resultMap = new Map(); // 用于去重
         resultsArray.forEach((result, index) => {
-            const apiId = selectedAPIs[index];
+            const apiId = searchPromises[index].apiId;
             
             if (result.status === 'fulfilled' && Array.isArray(result.value) && result.value.length > 0) {
                 successfulAPIs++;
@@ -741,9 +737,9 @@ async function search() {
                 console.log(`API ${apiId} 返回 ${result.value.length} 个结果`);
                 
                 result.value.forEach(item => {
-                    // 使用视频名称和年份作为去重键
-                    const key = `${item.vod_name}_${item.vod_year || ''}`;
-                    if (!resultMap.has(key) || resultMap.get(key).source_name > item.source_name) {
+                    // 使用视频名称、年份和来源作为去重键，保留不同来源的相同内容
+                    const key = `${item.vod_name}_${item.vod_year || ''}_${item.source_code || apiId}`;
+                    if (!resultMap.has(key)) {
                         resultMap.set(key, item);
                     }
                 });
