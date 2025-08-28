@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API连通性测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center text-pink-500">PIAOPIAO-TV API连通性测试</h1>
+        
+        <div class="mb-6 text-center">
+            <button id="testAllBtn" class="bg-pink-600 hover:bg-pink-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                开始测试所有API
+            </button>
+            <button id="testBuiltinBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-medium transition-colors ml-4">
+                测试内置API
+            </button>
+            <button id="testCustomBtn" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-medium transition-colors ml-4">
+                测试自定义API
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <!-- 测试结果统计 -->
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">测试统计</h3>
+                <div class="space-y-2">
+                    <div>总数: <span id="totalCount" class="text-blue-400">0</span></div>
+                    <div>成功: <span id="successCount" class="text-green-400">0</span></div>
+                    <div>失败: <span id="failCount" class="text-red-400">0</span></div>
+                    <div>进行中: <span id="testingCount" class="text-yellow-400">0</span></div>
+                </div>
+            </div>
+            
+            <!-- 测试进度 -->
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">测试进度</h3>
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-pink-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="text-sm text-gray-400 mt-2">
+                    <span id="progressText">0/0</span>
+                </div>
+            </div>
+            
+            <!-- 当前测试 -->
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">当前测试</h3>
+                <div id="currentTest" class="text-sm text-gray-400">等待开始...</div>
+            </div>
+        </div>
+
+        <!-- 测试结果列表 -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">测试结果</h2>
+            <div id="testResults" class="space-y-3">
+                <!-- 测试结果将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入必要的脚本 -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // 测试状态管理
+        let testStats = {
+            total: 0,
+            success: 0,
+            fail: 0,
+            testing: 0,
+            completed: 0
+        };
+
+        // 更新统计显示
+        function updateStats() {
+            document.getElementById('totalCount').textContent = testStats.total;
+            document.getElementById('successCount').textContent = testStats.success;
+            document.getElementById('failCount').textContent = testStats.fail;
+            document.getElementById('testingCount').textContent = testStats.testing;
+            
+            const progress = testStats.total > 0 ? (testStats.completed / testStats.total) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${testStats.completed}/${testStats.total}`;
+        }
+
+        // 添加测试结果到页面
+        function addTestResult(apiId, name, url, status, responseTime, error) {
+            const resultsContainer = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `p-4 rounded-lg border-l-4 ${
+                status === 'success' ? 'bg-green-900/30 border-green-500' :
+                status === 'testing' ? 'bg-yellow-900/30 border-yellow-500' :
+                'bg-red-900/30 border-red-500'
+            }`;
+            
+            const statusIcon = status === 'success' ? '✅' : status === 'testing' ? '🔄' : '❌';
+            const statusText = status === 'success' ? '连接正常' : status === 'testing' ? '测试中...' : '连接失败';
+            
+            resultDiv.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-lg">${statusIcon}</span>
+                            <span class="font-semibold">${name}</span>
+                            <span class="text-xs text-gray-400">(${apiId})</span>
+                        </div>
+                        <div class="text-sm text-gray-300 mb-1">${url}</div>
+                        <div class="text-xs text-gray-400">
+                            状态: <span class="${
+                                status === 'success' ? 'text-green-400' :
+                                status === 'testing' ? 'text-yellow-400' :
+                                'text-red-400'
+                            }">${statusText}</span>
+                            ${responseTime ? ` | 响应时间: ${responseTime}ms` : ''}
+                        </div>
+                        ${error ? `<div class="text-xs text-red-400 mt-1">错误: ${error}</div>` : ''}
+                    </div>
+                    ${status === 'testing' ? '<div class="loading w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full"></div>' : ''}
+                </div>
+            `;
+            
+            resultDiv.id = `result-${apiId}`;
+            resultsContainer.appendChild(resultDiv);
+        }
+
+        // 更新测试结果
+        function updateTestResult(apiId, status, responseTime, error) {
+            const resultDiv = document.getElementById(`result-${apiId}`);
+            if (!resultDiv) return;
+            
+            // 更新统计
+            if (status === 'success') {
+                testStats.success++;
+                testStats.testing--;
+            } else if (status === 'fail') {
+                testStats.fail++;
+                testStats.testing--;
+            }
+            testStats.completed++;
+            
+            // 更新显示
+            const statusIcon = status === 'success' ? '✅' : '❌';
+            const statusText = status === 'success' ? '连接正常' : '连接失败';
+            const statusColor = status === 'success' ? 'text-green-400' : 'text-red-400';
+            const borderColor = status === 'success' ? 'border-green-500' : 'border-red-500';
+            const bgColor = status === 'success' ? 'bg-green-900/30' : 'bg-red-900/30';
+            
+            resultDiv.className = `p-4 rounded-lg border-l-4 ${bgColor} ${borderColor}`;
+            
+            const statusSpan = resultDiv.querySelector('.text-yellow-400, .text-green-400, .text-red-400');
+            if (statusSpan) {
+                statusSpan.className = statusColor;
+                statusSpan.textContent = statusText;
+            }
+            
+            // 更新图标
+            const iconSpan = resultDiv.querySelector('.text-lg');
+            if (iconSpan) {
+                iconSpan.textContent = statusIcon;
+            }
+            
+            // 移除加载动画
+            const loadingDiv = resultDiv.querySelector('.loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+            
+            // 添加响应时间
+            if (responseTime) {
+                const timeSpan = resultDiv.querySelector('.text-xs.text-gray-400');
+                if (timeSpan && !timeSpan.textContent.includes('响应时间')) {
+                    timeSpan.innerHTML += ` | 响应时间: ${responseTime}ms`;
+                }
+            }
+            
+            // 添加错误信息
+            if (error && status === 'fail') {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-xs text-red-400 mt-1';
+                errorDiv.textContent = `错误: ${error}`;
+                resultDiv.querySelector('.flex-1').appendChild(errorDiv);
+            }
+            
+            updateStats();
+        }
+
+        // 测试单个API
+        async function testSingleAPI(apiId, name, url) {
+            document.getElementById('currentTest').textContent = `正在测试: ${name}`;
+            
+            const startTime = Date.now();
+            
+            try {
+                // 使用项目中的testSiteAvailability函数
+                const isAvailable = await testSiteAvailability(url);
+                const responseTime = Date.now() - startTime;
+                
+                if (isAvailable) {
+                    updateTestResult(apiId, 'success', responseTime);
+                } else {
+                    updateTestResult(apiId, 'fail', responseTime, '测试失败或响应格式无效');
+                }
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                updateTestResult(apiId, 'fail', responseTime, error.message);
+            }
+        }
+
+        // 测试内置API源
+        async function testBuiltinAPIs() {
+            const builtinAPIs = Object.entries(API_SITES).filter(([key]) => 
+                key !== 'aggregated' && key !== 'custom'
+            );
+            
+            testStats.total = builtinAPIs.length;
+            testStats.success = 0;
+            testStats.fail = 0;
+            testStats.testing = builtinAPIs.length;
+            testStats.completed = 0;
+            
+            updateStats();
+            
+            // 清空之前的结果
+            document.getElementById('testResults').innerHTML = '';
+            
+            // 添加所有API到结果列表（测试中状态）
+            for (const [apiId, apiInfo] of builtinAPIs) {
+                addTestResult(apiId, apiInfo.name, apiInfo.api, 'testing');
+            }
+            
+            // 并行测试所有API（限制并发数）
+            const concurrency = 5; // 最大并发数
+            for (let i = 0; i < builtinAPIs.length; i += concurrency) {
+                const batch = builtinAPIs.slice(i, i + concurrency);
+                await Promise.all(
+                    batch.map(([apiId, apiInfo]) => 
+                        testSingleAPI(apiId, apiInfo.name, apiInfo.api)
+                    )
+                );
+            }
+            
+            document.getElementById('currentTest').textContent = '测试完成';
+        }
+
+        // 测试自定义API源
+        async function testCustomAPIs() {
+            const customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]');
+            
+            if (customAPIs.length === 0) {
+                alert('没有找到自定义API源');
+                return;
+            }
+            
+            testStats.total = customAPIs.length;
+            testStats.success = 0;
+            testStats.fail = 0;
+            testStats.testing = customAPIs.length;
+            testStats.completed = 0;
+            
+            updateStats();
+            
+            // 清空之前的结果
+            document.getElementById('testResults').innerHTML = '';
+            
+            // 添加所有API到结果列表（测试中状态）
+            for (let i = 0; i < customAPIs.length; i++) {
+                const api = customAPIs[i];
+                addTestResult(`custom-${i}`, api.name, api.url, 'testing');
+            }
+            
+            // 并行测试所有API
+            const concurrency = 5;
+            for (let i = 0; i < customAPIs.length; i += concurrency) {
+                const batch = customAPIs.slice(i, i + concurrency);
+                await Promise.all(
+                    batch.map((api, index) => 
+                        testSingleAPI(`custom-${i + index}`, api.name, api.url)
+                    )
+                );
+            }
+            
+            document.getElementById('currentTest').textContent = '测试完成';
+        }
+
+        // 测试所有API源
+        async function testAllAPIs() {
+            await testBuiltinAPIs();
+            
+            // 等待一秒后测试自定义API
+            setTimeout(async () => {
+                const customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]');
+                if (customAPIs.length > 0) {
+                    // 添加分隔线
+                    const separator = document.createElement('div');
+                    separator.className = 'border-t border-gray-600 my-4 pt-4';
+                    separator.innerHTML = '<h3 class="text-lg font-semibold text-gray-300">自定义API源</h3>';
+                    document.getElementById('testResults').appendChild(separator);
+                    
+                    // 重置统计（只针对自定义API）
+                    const builtinCount = testStats.total;
+                    testStats.total += customAPIs.length;
+                    testStats.testing = customAPIs.length;
+                    
+                    updateStats();
+                    
+                    // 测试自定义API
+                    for (let i = 0; i < customAPIs.length; i++) {
+                        const api = customAPIs[i];
+                        addTestResult(`custom-${i}`, api.name, api.url, 'testing');
+                    }
+                    
+                    const concurrency = 5;
+                    for (let i = 0; i < customAPIs.length; i += concurrency) {
+                        const batch = customAPIs.slice(i, i + concurrency);
+                        await Promise.all(
+                            batch.map((api, index) => 
+                                testSingleAPI(`custom-${i + index}`, api.name, api.url)
+                            )
+                        );
+                    }
+                }
+                
+                document.getElementById('currentTest').textContent = '所有测试完成';
+            }, 1000);
+        }
+
+        // 绑定事件监听器
+        document.getElementById('testAllBtn').addEventListener('click', testAllAPIs);
+        document.getElementById('testBuiltinBtn').addEventListener('click', testBuiltinAPIs);
+        document.getElementById('testCustomBtn').addEventListener('click', testCustomAPIs);
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('API连通性测试页面已加载');
+            console.log('可用的内置API源:', Object.keys(API_SITES).filter(key => key !== 'aggregated' && key !== 'custom'));
+            
+            const customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]');
+            console.log('自定义API源数量:', customAPIs.length);
+        });
+    </script>
+</body>
+</html>

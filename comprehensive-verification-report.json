@@ -1,0 +1,571 @@
+{
+  "timestamp": "2025-08-28T10:05:18.394Z",
+  "summary": {
+    "totalTested": 14,
+    "actuallyAvailable": 4,
+    "stillFailed": 10,
+    "misjudgmentRate": 29
+  },
+  "results": [
+    {
+      "apiId": "ruyi",
+      "name": "如意资源",
+      "originalReason": "响应包含错误信息",
+      "isActuallyAvailable": true,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": true,
+          "reason": "有效响应 (13005字节, 200)",
+          "statusCode": 200,
+          "contentLength": 13005,
+          "responseTime": 407,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":1,\"limit\":20,\"total\":2,\"list\":[{\"vod_id\":55662,\"type_id\":46,\"type_id_1\":2,\"group_id\":0,\"vod_name\":\"真爱测试报告\",\"vod_sub\":\"\",\"vod_en\":\"zhenaiceshibaogao\",\"vod_st"
+        },
+        {
+          "method": "无参数测试",
+          "success": true,
+          "reason": "有效响应 (5592字节, 200)",
+          "statusCode": 200,
+          "contentLength": 5592,
+          "responseTime": 195,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":2846,\"limit\":20,\"total\":56909,\"list\":[{\"vod_id\":57448,\"vod_name\":\"目之所及\",\"type_id\":13,\"type_name\":\"国产剧\",\"vod_en\":\"muzhisuoji\",\"vod_time\":\"2025-08-28 18:01:59"
+        },
+        {
+          "method": "不同UA测试",
+          "success": true,
+          "reason": "有效响应 (13005字节, 200)",
+          "statusCode": 200,
+          "contentLength": 13005,
+          "responseTime": 208,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":1,\"limit\":20,\"total\":2,\"list\":[{\"vod_id\":55662,\"type_id\":46,\"type_id_1\":2,\"group_id\":0,\"vod_name\":\"真爱测试报告\",\"vod_sub\":\"\",\"vod_en\":\"zhenaiceshibaogao\",\"vod_st"
+        },
+        {
+          "method": "长超时测试",
+          "success": true,
+          "reason": "有效响应 (4168字节, 200)",
+          "statusCode": 200,
+          "contentLength": 4168,
+          "responseTime": 199,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003�[Y�\u001c�u~ϯ\u0018L��\u0000M��\u0017�0��Mq� \t\u00108�P�+�͙�A/�ǂ\u0000R\neJ\"\tQ�h�\u0012�Д\u0004I�lY�������3ç��|�\f���Fw�\t� y\u0019Tݪ>u��Y�w�<�\u001e�1���������S�{��޻����\u000e���[�q���E\u0018N\u0007��ݭ�v\u001fW���'É��e98��\u0013Ϭ�\u001dƢ\u001f�OI�\u0014�'�;��\u0017��MA���\u001e\r�;�3H*6p��"
+        }
+      ],
+      "successfulMethods": [
+        "基本测试",
+        "无参数测试",
+        "不同UA测试",
+        "长超时测试"
+      ]
+    },
+    {
+      "apiId": "bfzy",
+      "name": "暴风资源",
+      "originalReason": "连接错误: read ECONNRESET",
+      "isActuallyAvailable": true,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": true,
+          "reason": "有效响应 (10145字节, 200)",
+          "statusCode": 200,
+          "contentLength": 10145,
+          "responseTime": 763,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":1,\"limit\":\"20\",\"total\":5,\"list\":[{\"vod_id\":46323,\"type_id\":22,\"type_id1\":0,\"group_id\":0,\"vod_name\":\"忠贞测试者\",\"vod_sub\":\"考验忠诚  The Loyalty Tester - Special Ord"
+        },
+        {
+          "method": "无参数测试",
+          "success": true,
+          "reason": "有效响应 (6033字节, 200)",
+          "statusCode": 200,
+          "contentLength": 6033,
+          "responseTime": 779,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":4928,\"limit\":20,\"total\":98544,\"list\":[{\"vod_id\":99356,\"vod_name\":\"潘及的秘密日记\",\"type_id\":41,\"type_name\":\"日韩动漫\",\"vod_en\":\"panjidemimiriji\",\"vod_time\":\"2025-08-28"
+        },
+        {
+          "method": "不同UA测试",
+          "success": true,
+          "reason": "有效响应 (10145字节, 200)",
+          "statusCode": 200,
+          "contentLength": 10145,
+          "responseTime": 171,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":1,\"limit\":\"20\",\"total\":5,\"list\":[{\"vod_id\":46323,\"type_id\":22,\"type_id1\":0,\"group_id\":0,\"vod_name\":\"忠贞测试者\",\"vod_sub\":\"考验忠诚  The Loyalty Tester - Special Ord"
+        },
+        {
+          "method": "长超时测试",
+          "success": true,
+          "reason": "有效响应 (4168字节, 200)",
+          "statusCode": 200,
+          "contentLength": 4168,
+          "responseTime": 185,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003�[o\u001b9����W\u00144��i�\u001c�N��Ag���d{��X\u0004���jR�\u0012�JN;�\u0001�,ɺىbٖ�[[�$�$ǉ%�b\u0001���\u0011�\"�����`I�%�ɦ�\u0019\u0004A�\u0018���!y�\"?�ÿ��\"\u000bM\u001e3m�ˣ&�\t?*�d\u0011E�����6\u0005�h����\u0015��b�x��)&��h�\"*�7y�D,+&����4&�w8��9�\u0016+mR�\u0003�([,o\nf���M��\u0018\f\u0018U"
+        }
+      ],
+      "successfulMethods": [
+        "基本测试",
+        "无参数测试",
+        "不同UA测试",
+        "长超时测试"
+      ]
+    },
+    {
+      "apiId": "yinghua",
+      "name": "樱花资源",
+      "originalReason": "HTTP客户端错误 403",
+      "isActuallyAvailable": true,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 783,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "无参数测试",
+          "success": true,
+          "reason": "有效响应 (4977字节, 200)",
+          "statusCode": 200,
+          "contentLength": 4977,
+          "responseTime": 351,
+          "preview": "{\"code\":1,\"msg\":\"数据列表\",\"page\":1,\"pagecount\":4149,\"limit\":\"20\",\"total\":82978,\"list\":[{\"vod_id\":82978,\"vod_name\":\"校招当天，同学们集体迟到了\",\"type_id\":13,\"type_name\":\"国产剧\",\"vod_en\":\"xiaozhaodangtiantongxuemenjitich"
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 303,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 109,
+          "responseTime": 301,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000�]�A\n�0\f\u0004��\u0007Q�\u0018z�\u001f�\u0004[�)�\u001c���ZA<���.�N�`�\u0006\u001d/dP�\u00066S?vsL�\u0013� <\"d�F:�]Y��A7�\u0013YA�v��P�d�r|=x۠.�\u0000mx���\u0000\u0000\u0000"
+        }
+      ],
+      "successfulMethods": [
+        "无参数测试"
+      ]
+    },
+    {
+      "apiId": "baidu",
+      "name": "百度云资源",
+      "originalReason": "请求超时",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15379
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15330
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15316
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 30363
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "wujin",
+      "name": "无尽资源",
+      "originalReason": "连接错误: read ECONNRESET",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 260
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 259
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 240
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 251
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "ikun",
+      "name": "iKun资源",
+      "originalReason": "连接错误: read ECONNRESET",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 415
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 408
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 4037
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 926
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "tyyszy",
+      "name": "天翼云资源",
+      "originalReason": "HTTP客户端错误 404",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 146,
+          "responseTime": 582,
+          "preview": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 146,
+          "responseTime": 191,
+          "preview": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 146,
+          "responseTime": 191,
+          "preview": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 107,
+          "responseTime": 193,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000�]�A\n�0\f\u0004��\u0007Q�1���?�\r�PS�\b�{[� �Bvg�E�k��Bǣ%T��ɴ�\u0019�6}��\"<\"$t���wfQ�\b]�O$\u0005�ع;A������m���\u0002\u000b�a3�\u0000\u0000\u0000"
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "qilin",
+      "name": "麒麟资源",
+      "originalReason": "响应内容过短且格式不明确",
+      "isActuallyAvailable": true,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "响应内容过短 (6字节)",
+          "statusCode": 200,
+          "contentLength": 6,
+          "responseTime": 551,
+          "preview": "IP未授权！"
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "响应内容过短 (6字节)",
+          "statusCode": 200,
+          "contentLength": 6,
+          "responseTime": 196,
+          "preview": "IP未授权！"
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "响应内容过短 (6字节)",
+          "statusCode": 200,
+          "contentLength": 6,
+          "responseTime": 208,
+          "preview": "IP未授权！"
+        },
+        {
+          "method": "长超时测试",
+          "success": true,
+          "reason": "可能有效 (34字节, 200)",
+          "statusCode": 200,
+          "contentLength": 34,
+          "responseTime": 197,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003�\fx6gճ��gs���i\u0004\u0000�\u0015s/\u000e\u0000\u0000\u0000"
+        }
+      ],
+      "successfulMethods": [
+        "长超时测试"
+      ]
+    },
+    {
+      "apiId": "tiankong",
+      "name": "天空资源",
+      "originalReason": "HTTP客户端错误 404",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 431,
+          "responseTime": 776,
+          "preview": "<!DOCTYPE html>\n<html>\n<head>\n<title>404 Error</title>\n<style>\n    body {\n        width: 35em;\n        margin: 0 auto;\n        font-family: Tahoma, Verdana, Arial, sans-serif;\n    }\n</style>\n</head>\n<"
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 431,
+          "responseTime": 585,
+          "preview": "<!DOCTYPE html>\n<html>\n<head>\n<title>404 Error</title>\n<style>\n    body {\n        width: 35em;\n        margin: 0 auto;\n        font-family: Tahoma, Verdana, Arial, sans-serif;\n    }\n</style>\n</head>\n<"
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 431,
+          "responseTime": 601,
+          "preview": "<!DOCTYPE html>\n<html>\n<head>\n<title>404 Error</title>\n<style>\n    body {\n        width: 35em;\n        margin: 0 auto;\n        font-family: Tahoma, Verdana, Arial, sans-serif;\n    }\n</style>\n</head>\n<"
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "HTTP错误 404",
+          "statusCode": 404,
+          "contentLength": 280,
+          "responseTime": 578,
+          "preview": "\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000�UQ�N�0\f��+��۲�q)�\u0012�qB��@��N\u0013�IF�R\rĿ�l\u001d�|yOγ��#/���\u001f/+�l�r$�@X'`�-���\u0012V!� š1��w\u0019!���;���\\��Y\u0017pyE���i14�\u00150\u0007�؟��;�*���\u0015�F�-N��B�.��`��@D\u0017���Q��ߑ\u0014�~)\u0006��D�\u0000�\u0004\u00159��\b�\u000e�nƚy[\b�����M��g���R\u001a�@\fՙ z�Xu�"
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "jisuapi",
+      "name": "极速资源",
+      "originalReason": "连接错误: read ECONNRESET",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 389
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 184
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 231
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 207
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "xiongzhang",
+      "name": "熊掌资源",
+      "originalReason": "连接错误: getaddrinfo ENOTFOUND",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "连接错误: getaddrinfo ENOTFOUND xzcjz.com",
+          "responseTime": 59
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "连接错误: getaddrinfo ENOTFOUND xzcjz.com",
+          "responseTime": 33
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "连接错误: getaddrinfo ENOTFOUND xzcjz.com",
+          "responseTime": 33
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: getaddrinfo ENOTFOUND xzcjz.com",
+          "responseTime": 36
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "haiwaikan",
+      "name": "海外看资源",
+      "originalReason": "连接错误: read ECONNRESET",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 306
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 308
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 282
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: read ECONNRESET",
+          "responseTime": 276
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "tangrenjie",
+      "name": "唐人街影视",
+      "originalReason": "请求超时",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15074
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15048
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "请求超时",
+          "responseTime": 15042
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "连接错误: connect ETIMEDOUT 85.208.118.63:443",
+          "responseTime": 21087
+        }
+      ],
+      "successfulMethods": []
+    },
+    {
+      "apiId": "tiankong2",
+      "name": "天堂资源",
+      "originalReason": "HTTP客户端错误 403",
+      "isActuallyAvailable": false,
+      "testResults": [
+        {
+          "method": "基本测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 155,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "无参数测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 55,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "不同UA测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 93,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        },
+        {
+          "method": "长超时测试",
+          "success": false,
+          "error": "HTTP错误 403",
+          "statusCode": 403,
+          "contentLength": 146,
+          "responseTime": 67,
+          "preview": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+        }
+      ],
+      "successfulMethods": []
+    }
+  ]
+}
