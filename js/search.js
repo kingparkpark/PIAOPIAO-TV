@@ -1,91 +1,3 @@
-// 优化版本的搜索函数
-async function searchByAPIAndKeyWordOptimized(apiId, query, signal) {
-    try {
-        let apiUrl, apiName, apiBaseUrl;
-        
-        // 处理自定义API
-        if (apiId.startsWith('custom_')) {
-            const customIndex = apiId.replace('custom_', '');
-            const customApi = getCustomApiInfo(customIndex);
-            if (!customApi) return [];
-            
-            apiBaseUrl = customApi.url;
-            apiUrl = apiBaseUrl + API_CONFIG.search.path + encodeURIComponent(query);
-            apiName = customApi.name;
-        } else {
-            // 内置API
-            if (!API_SITES[apiId]) return [];
-            apiBaseUrl = API_SITES[apiId].api;
-            apiUrl = apiBaseUrl + API_CONFIG.search.path + encodeURIComponent(query);
-            apiName = API_SITES[apiId].name;
-        }
-        
-        // 使用传入的信号或创建新的控制器
-        const controller = signal ? null : new AbortController();
-        const timeoutId = setTimeout(() => {
-            if (controller) controller.abort();
-            else if (signal && signal.abort) signal.abort();
-        }, 10000); // 减少超时时间到10秒
-        
-        const requestSignal = signal || controller.signal;
-        
-        // 尝试直接访问API，如果失败则使用代理
-        let response;
-        try {
-            // 首先尝试直接访问API
-            response = await fetch(apiUrl, {
-                headers: {
-                    ...API_CONFIG.search.headers,
-                    'Access-Control-Allow-Origin': '*'
-                },
-                mode: 'cors',
-                signal: requestSignal
-            });
-        } catch (directError) {
-            if (requestSignal.aborted) throw new Error('Request aborted');
-            console.log(`直接访问失败，尝试代理: ${directError.message}`);
-            // 如果直接访问失败，尝试使用代理
-            const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-                PROXY_URL + encodeURIComponent(apiUrl);
-            
-            response = await fetch(proxiedUrl, {
-                headers: API_CONFIG.search.headers,
-                signal: requestSignal
-            });
-        }
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            return [];
-        }
-        
-        const data = await response.json();
-        
-        if (!data || !data.list || !Array.isArray(data.list) || data.list.length === 0) {
-            return [];
-        }
-        
-        // 只处理第一页结果以提高速度
-        const results = data.list.map(item => ({
-            ...item,
-            source_name: apiName,
-            source_code: apiId,
-            api_url: apiId.startsWith('custom_') ? getCustomApiInfo(apiId.replace('custom_', ''))?.url : undefined
-        }));
-        
-        return results;
-    } catch (error) {
-        if (error.name === 'AbortError' || error.message === 'Request aborted') {
-            console.log(`API ${apiId} 搜索被取消`);
-            return [];
-        }
-        console.warn(`API ${apiId} 搜索失败:`, error);
-        return [];
-    }
-}
-
 async function searchByAPIAndKeyWord(apiId, query) {
     try {
         let apiUrl, apiName, apiBaseUrl;
@@ -111,30 +23,15 @@ async function searchByAPIAndKeyWord(apiId, query) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         
-        // 尝试直接访问API，如果失败则使用代理
-        let response;
-        try {
-            // 首先尝试直接访问API
-            response = await fetch(apiUrl, {
-                headers: {
-                    ...API_CONFIG.search.headers,
-                    'Access-Control-Allow-Origin': '*'
-                },
-                mode: 'cors',
-                signal: controller.signal
-            });
-        } catch (directError) {
-            console.log(`直接访问失败，尝试代理: ${directError.message}`);
-            // 如果直接访问失败，尝试使用代理
-            const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-                PROXY_URL + encodeURIComponent(apiUrl);
-            
-            response = await fetch(proxiedUrl, {
-                headers: API_CONFIG.search.headers,
-                signal: controller.signal
-            });
-        }
+        // 添加鉴权参数到代理URL
+        const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
+            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
+            PROXY_URL + encodeURIComponent(apiUrl);
+        
+        const response = await fetch(proxiedUrl, {
+            headers: API_CONFIG.search.headers,
+            signal: controller.signal
+        });
         
         clearTimeout(timeoutId);
         
@@ -177,30 +74,15 @@ async function searchByAPIAndKeyWord(apiId, query) {
                         const pageController = new AbortController();
                         const pageTimeoutId = setTimeout(() => pageController.abort(), 15000);
                         
-                        // 尝试直接访问分页API，如果失败则使用代理
-                        let pageResponse;
-                        try {
-                            // 首先尝试直接访问API
-                            pageResponse = await fetch(pageUrl, {
-                                headers: {
-                                    ...API_CONFIG.search.headers,
-                                    'Access-Control-Allow-Origin': '*'
-                                },
-                                mode: 'cors',
-                                signal: pageController.signal
-                            });
-                        } catch (directError) {
-                            console.log(`分页直接访问失败，尝试代理: ${directError.message}`);
-                            // 如果直接访问失败，尝试使用代理
-                            const proxiedPageUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(pageUrl)) :
-                                PROXY_URL + encodeURIComponent(pageUrl);
-                            
-                            pageResponse = await fetch(proxiedPageUrl, {
-                                headers: API_CONFIG.search.headers,
-                                signal: pageController.signal
-                            });
-                        }
+                        // 添加鉴权参数到代理URL
+                        const proxiedPageUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
+                            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(pageUrl)) :
+                            PROXY_URL + encodeURIComponent(pageUrl);
+                        
+                        const pageResponse = await fetch(proxiedPageUrl, {
+                            headers: API_CONFIG.search.headers,
+                            signal: pageController.signal
+                        });
                         
                         clearTimeout(pageTimeoutId);
                         
@@ -239,7 +121,23 @@ async function searchByAPIAndKeyWord(apiId, query) {
         
         return results;
     } catch (error) {
-        console.warn(`API ${apiId} 搜索失败:`, error);
+        // 增强错误日志记录
+        const errorInfo = {
+            apiId,
+            query,
+            errorType: error.name,
+            errorMessage: error.message,
+            timestamp: new Date().toISOString()
+        };
+        
+        if (error.name === 'AbortError') {
+            console.warn(`API ${apiId} 搜索超时:`, errorInfo);
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.warn(`API ${apiId} 网络连接失败:`, errorInfo);
+        } else {
+            console.warn(`API ${apiId} 搜索失败:`, errorInfo);
+        }
+        
         return [];
     }
 }

@@ -388,8 +388,8 @@ function updateSelectedAPIs() {
     // 获取选中的内置API
     const builtInApis = Array.from(builtInApiCheckboxes).map(input => input.dataset.api);
 
-    // 获取选中的自定义API
-    const customApiCheckboxes = document.querySelectorAll('#customApisList input:checked');
+    // 获取选中的自定义API（只选择启用复选框，不包括批量选择复选框）
+    const customApiCheckboxes = document.querySelectorAll('#customApisList input[id^="custom_api_"]:not([id*="_select_"]):checked');
     const customApiIndices = Array.from(customApiCheckboxes).map(input => 'custom_' + input.dataset.customIndex);
 
     // 合并内置和自定义API
@@ -717,7 +717,7 @@ async function search() {
         for (let i = 0; i < selectedAPIs.length; i += maxConcurrent) {
             const batch = selectedAPIs.slice(i, i + maxConcurrent);
             const batchPromises = batch.map(apiId => 
-                searchByAPIAndKeyWordOptimized(apiId, query, searchAbortController.signal)
+                searchByAPIAndKeyWord(apiId, query)
             );
             searchPromises.push(...batchPromises);
         }
@@ -725,10 +725,21 @@ async function search() {
         // 等待所有搜索请求完成
         const resultsArray = await Promise.allSettled(searchPromises);
 
+        // 统计搜索结果
+        let successfulAPIs = 0;
+        let failedAPIs = 0;
+        let totalResults = 0;
+
         // 合并所有成功的结果
         const resultMap = new Map(); // 用于去重
-        resultsArray.forEach(result => {
+        resultsArray.forEach((result, index) => {
+            const apiId = selectedAPIs[index];
+            
             if (result.status === 'fulfilled' && Array.isArray(result.value) && result.value.length > 0) {
+                successfulAPIs++;
+                totalResults += result.value.length;
+                console.log(`API ${apiId} 返回 ${result.value.length} 个结果`);
+                
                 result.value.forEach(item => {
                     // 使用视频名称和年份作为去重键
                     const key = `${item.vod_name}_${item.vod_year || ''}`;
@@ -736,10 +747,30 @@ async function search() {
                         resultMap.set(key, item);
                     }
                 });
+            } else {
+                failedAPIs++;
+                if (result.status === 'rejected') {
+                    console.warn(`API ${apiId} 搜索失败:`, result.reason);
+                } else {
+                    console.warn(`API ${apiId} 未返回结果`);
+                }
             }
         });
         
+        // 输出搜索统计信息
+        console.log(`搜索完成: ${successfulAPIs}/${selectedAPIs.length} 个API成功, 总计 ${totalResults} 个原始结果, 去重后 ${resultMap.size} 个结果`);
+        
         allResults = Array.from(resultMap.values());
+        
+        // 显示搜索状态提示
+        if (failedAPIs > 0) {
+            const statusMessage = `搜索完成：${successfulAPIs}/${selectedAPIs.length} 个数据源成功返回结果`;
+            if (failedAPIs === selectedAPIs.length) {
+                showToast('所有数据源都无法访问，请检查网络连接或更换数据源', 'error');
+            } else {
+                showToast(statusMessage, 'info');
+            }
+        }
 
         // 对搜索结果进行排序：按名称优先，名称相同时按接口源排序
         allResults.sort((a, b) => {
