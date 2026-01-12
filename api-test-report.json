@@ -1,0 +1,223 @@
+{
+  "timestamp": "2025-08-28T10:20:34.482Z",
+  "summary": {
+    "total": 25,
+    "success": 12,
+    "failed": 13,
+    "successRate": 48,
+    "totalTime": 139206
+  },
+  "results": [
+    {
+      "apiId": "dyttzy",
+      "name": "电影天堂资源",
+      "url": "http://caiji.dyttzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1464,
+      "statusCode": 200,
+      "contentLength": 20493,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "ruyi",
+      "name": "如意资源",
+      "url": "https://cj.rycjapi.com/api.php/provide/vod",
+      "success": true,
+      "responseTime": 197,
+      "statusCode": 200,
+      "contentLength": 5585,
+      "reason": "包含有效JSON格式 (无参数测试)"
+    },
+    {
+      "apiId": "bfzy",
+      "name": "暴风资源",
+      "url": "https://bfzyapi.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "dbzy",
+      "name": "豆瓣资源",
+      "url": "https://dbzy.tv/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1044,
+      "statusCode": 200,
+      "contentLength": 28038,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "mozhua",
+      "name": "魔爪资源",
+      "url": "https://mozhuazy.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 860,
+      "statusCode": 200,
+      "contentLength": 6169,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "mdzy",
+      "name": "魔都资源",
+      "url": "https://www.mdzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1225,
+      "statusCode": 200,
+      "contentLength": 9965,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "zuid",
+      "name": "最大资源",
+      "url": "https://api.zuidapi.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "yinghua",
+      "name": "樱花资源",
+      "url": "https://m3u8.apiyhzy.com/api.php/provide/vod",
+      "success": true,
+      "responseTime": 841,
+      "statusCode": 200,
+      "contentLength": 4977,
+      "reason": "包含有效JSON格式 (樱花专用)"
+    },
+    {
+      "apiId": "baidu",
+      "name": "百度云资源",
+      "url": "https://api.apibdzy.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "wujin",
+      "name": "无尽资源",
+      "url": "https://api.wujinapi.me/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "wwzy",
+      "name": "旺旺短剧",
+      "url": "https://wwzy.tv/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 965,
+      "statusCode": 200,
+      "contentLength": 6082,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "ikun",
+      "name": "iKun资源",
+      "url": "https://ikunzyapi.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "lziapi",
+      "name": "量子资源站",
+      "url": "https://cj.lziapi.com/api.php/provide/vod/?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1025,
+      "statusCode": 200,
+      "contentLength": 17266,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "qiqi",
+      "name": "七七资源",
+      "url": "https://www.qiqidys.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 996,
+      "statusCode": 200,
+      "contentLength": 531,
+      "reason": "响应内容充足 (基本测试)"
+    },
+    {
+      "apiId": "tyyszy",
+      "name": "天翼云资源",
+      "url": "https://www.tyyszy.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "qilin",
+      "name": "麒麟资源",
+      "url": "https://www.qilinzyz.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "wolong",
+      "name": "卧龙资源",
+      "url": "https://collect.wolongzyw.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 886,
+      "statusCode": 200,
+      "contentLength": 79,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "feifan",
+      "name": "非凡资源",
+      "url": "http://cj.ffzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1750,
+      "statusCode": 200,
+      "contentLength": 11309,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "tiankong",
+      "name": "天空资源",
+      "url": "http://m3u8.tiankongapi.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "jisuapi",
+      "name": "极速资源",
+      "url": "https://jszyapi.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "subo",
+      "name": "速博资源",
+      "url": "https://subocaiji.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1633,
+      "statusCode": 200,
+      "contentLength": 10131,
+      "reason": "包含有效JSON格式 (基本测试)"
+    },
+    {
+      "apiId": "xiongzhang",
+      "name": "熊掌资源",
+      "url": "https://xzcjz.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "haiwaikan",
+      "name": "海外看资源",
+      "url": "https://haiwaikan.com/api.php/provide/vod",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "tangrenjie",
+      "name": "唐人街影视",
+      "url": "https://www.tangrenjie.tv/api.php/provide/vod/at/xml",
+      "success": false,
+      "error": "所有测试方法都失败"
+    },
+    {
+      "apiId": "tiankong2",
+      "name": "天堂资源",
+      "url": "http://vipmv.cc/api.php/provide/vod/at/xml",
+      "success": false,
+      "error": "所有测试方法都失败"
+    }
+  ]
+}

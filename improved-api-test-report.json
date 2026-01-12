@@ -1,0 +1,246 @@
+{
+  "timestamp": "2025-08-28T09:39:20.019Z",
+  "summary": {
+    "total": 25,
+    "success": 11,
+    "failed": 14,
+    "successRate": 44,
+    "totalTime": 93004
+  },
+  "results": [
+    {
+      "apiId": "dyttzy",
+      "name": "电影天堂资源",
+      "url": "http://caiji.dyttzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1407,
+      "statusCode": 200,
+      "contentLength": 20494,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "ruyi",
+      "name": "如意资源",
+      "url": "https://cj.rycjapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 387,
+      "statusCode": 200,
+      "contentLength": 13005,
+      "error": "响应包含错误信息"
+    },
+    {
+      "apiId": "bfzy",
+      "name": "暴风资源",
+      "url": "https://bfzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "连接错误: read ECONNRESET",
+      "responseTime": 205
+    },
+    {
+      "apiId": "dbzy",
+      "name": "豆瓣资源",
+      "url": "https://dbzy.tv/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1747,
+      "statusCode": 200,
+      "contentLength": 28040,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "mozhua",
+      "name": "魔爪资源",
+      "url": "https://mozhuazy.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1169,
+      "statusCode": 200,
+      "contentLength": 6176,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "mdzy",
+      "name": "魔都资源",
+      "url": "https://www.mdzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1409,
+      "statusCode": 200,
+      "contentLength": 9965,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "zuid",
+      "name": "最大资源",
+      "url": "https://api.zuidapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1216,
+      "statusCode": 200,
+      "contentLength": 14625,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "yinghua",
+      "name": "樱花资源",
+      "url": "https://m3u8.apiyhzy.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 816,
+      "statusCode": 403,
+      "contentLength": 146,
+      "error": "HTTP客户端错误 403"
+    },
+    {
+      "apiId": "baidu",
+      "name": "百度云资源",
+      "url": "https://api.apibdzy.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "请求超时",
+      "responseTime": 15350
+    },
+    {
+      "apiId": "wujin",
+      "name": "无尽资源",
+      "url": "https://api.wujinapi.me/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "连接错误: read ECONNRESET",
+      "responseTime": 274
+    },
+    {
+      "apiId": "wwzy",
+      "name": "旺旺短剧",
+      "url": "https://wwzy.tv/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 940,
+      "statusCode": 200,
+      "contentLength": 6083,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "ikun",
+      "name": "iKun资源",
+      "url": "https://ikunzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "连接错误: read ECONNRESET",
+      "responseTime": 165
+    },
+    {
+      "apiId": "lziapi",
+      "name": "量子资源站",
+      "url": "https://cj.lziapi.com/api.php/provide/vod/?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1121,
+      "statusCode": 200,
+      "contentLength": 17269,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "qiqi",
+      "name": "七七资源",
+      "url": "https://www.qiqidys.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 971,
+      "statusCode": 200,
+      "contentLength": 531,
+      "reason": "响应内容充足"
+    },
+    {
+      "apiId": "tyyszy",
+      "name": "天翼云资源",
+      "url": "https://www.tyyszy.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 527,
+      "statusCode": 404,
+      "contentLength": 146,
+      "error": "HTTP客户端错误 404"
+    },
+    {
+      "apiId": "qilin",
+      "name": "麒麟资源",
+      "url": "https://www.qilinzyz.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 576,
+      "statusCode": 200,
+      "contentLength": 6,
+      "error": "响应内容过短且格式不明确"
+    },
+    {
+      "apiId": "wolong",
+      "name": "卧龙资源",
+      "url": "https://collect.wolongzyw.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 974,
+      "statusCode": 200,
+      "contentLength": 79,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "feifan",
+      "name": "非凡资源",
+      "url": "http://cj.ffzyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1523,
+      "statusCode": 200,
+      "contentLength": 11309,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "tiankong",
+      "name": "天空资源",
+      "url": "http://m3u8.tiankongapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 843,
+      "statusCode": 404,
+      "contentLength": 431,
+      "error": "HTTP客户端错误 404"
+    },
+    {
+      "apiId": "jisuapi",
+      "name": "极速资源",
+      "url": "https://jszyapi.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "连接错误: read ECONNRESET",
+      "responseTime": 209
+    },
+    {
+      "apiId": "subo",
+      "name": "速博资源",
+      "url": "https://subocaiji.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": true,
+      "responseTime": 1797,
+      "statusCode": 200,
+      "contentLength": 10134,
+      "reason": "包含有效JSON格式"
+    },
+    {
+      "apiId": "xiongzhang",
+      "name": "熊掌资源",
+      "url": "https://xzcjz.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "连接错误: getaddrinfo ENOTFOUND xzcjz.com",
+      "responseTime": 60
+    },
+    {
+      "apiId": "haiwaikan",
+      "name": "海外看资源",
+      "url": "https://haiwaikan.com/api.php/provide/vod?ac=videolist&wd=测试",
+      "success": false,
+      "error": "请求超时",
+      "responseTime": 30298
+    },
+    {
+      "apiId": "tangrenjie",
+      "name": "唐人街影视",
+      "url": "https://www.tangrenjie.tv/api.php/provide/vod/at/xml?ac=videolist&wd=测试",
+      "success": false,
+      "error": "请求超时",
+      "responseTime": 15079
+    },
+    {
+      "apiId": "tiankong2",
+      "name": "天堂资源",
+      "url": "http://vipmv.cc/api.php/provide/vod/at/xml?ac=videolist&wd=测试",
+      "success": false,
+      "responseTime": 177,
+      "statusCode": 403,
+      "contentLength": 146,
+      "error": "HTTP客户端错误 403"
+    }
+  ]
+}

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义API管理功能测试</title>
+    <script src="libs/tailwindcss.min.js"></script>
+    <style>
+        body { background-color: #0a0a0a; color: white; font-family: Arial, sans-serif; }
+        .test-section { margin: 20px 0; padding: 15px; background: #1a1a1a; border-radius: 8px; }
+        .test-result { margin: 10px 0; padding: 8px; border-radius: 4px; }
+        .success { background-color: #065f46; }
+        .error { background-color: #7f1d1d; }
+        .warning { background-color: #78350f; }
+        .info { background-color: #1e3a8a; }
+        .api-item { background: #2a2a2a; margin: 5px 0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-6">
+    <h1 class="text-2xl font-bold mb-6">自定义API管理功能测试</h1>
+    
+    <!-- 测试结果显示区域 -->
+    <div id="testResults" class="mb-6">
+        <h2 class="text-lg font-semibold mb-3">测试结果</h2>
+        <div id="resultsList"></div>
+    </div>
+    
+    <!-- 自定义API管理区域 -->
+    <div class="test-section">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">自定义API管理</h2>
+            <div class="flex space-x-2">
+                <button onclick="showAddForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">添加API</button>
+                <button onclick="toggleManagementPanel()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">管理面板</button>
+            </div>
+        </div>
+        
+        <!-- API管理工具栏 -->
+        <div id="managementToolbar" class="hidden mb-4 p-3 bg-gray-800 rounded">
+            <div class="flex flex-wrap gap-2 text-sm">
+                <button onclick="selectAll(true)" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded">全选</button>
+                <button onclick="selectAll(false)" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded">全不选</button>
+                <button onclick="deleteSelected()" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded">删除选中</button>
+                <button onclick="testSelected()" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded">测试选中</button>
+                <button onclick="exportApis()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded">导出</button>
+                <button onclick="showImportForm()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded">导入</button>
+            </div>
+        </div>
+        
+        <!-- 自定义API列表 -->
+        <div id="apisList" class="max-h-64 overflow-y-auto mb-4 bg-gray-900 p-3 rounded">
+            <!-- 自定义API将显示在这里 -->
+        </div>
+        
+        <!-- 添加自定义API表单 -->
+        <div id="addForm" class="hidden mt-4 p-4 bg-gray-800 rounded">
+            <input type="text" id="apiName" placeholder="API名称" class="w-full bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded mb-3">
+            <input type="text" id="apiUrl" placeholder="https://api.example.com" class="w-full bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded mb-3">
+            <input type="text" id="apiDetail" placeholder="detail地址（可选）" class="w-full bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded mb-3">
+            <div class="flex items-center mb-3">
+                <input type="checkbox" id="apiIsAdult" class="mr-2">
+                <label for="apiIsAdult" class="text-sm text-pink-400">黄色资源站</label>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="addApi()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">添加</button>
+                <button onclick="cancelAdd()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">取消</button>
+            </div>
+        </div>
+        
+        <!-- 导入自定义API表单 -->
+        <div id="importForm" class="hidden mt-4 p-4 bg-gray-800 rounded">
+            <div class="mb-3">
+                <label class="block text-sm text-gray-400 mb-2">导入方式：</label>
+                <div class="flex space-x-2 mb-3">
+                    <button onclick="setImportMode('file')" id="modeFile" class="px-3 py-1 bg-blue-600 text-white text-sm rounded">文件导入</button>
+                    <button onclick="setImportMode('text')" id="modeText" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded">文本导入</button>
+                </div>
+            </div>
+            <div id="fileArea">
+                <input type="file" id="fileInput" accept=".json" class="w-full bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded mb-3">
+            </div>
+            <div id="textArea" class="hidden">
+                <textarea id="textInput" placeholder="粘贴JSON格式的API配置..." class="w-full bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded mb-3 h-32 text-sm"></textarea>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="importApis()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">导入</button>
+                <button onclick="cancelImport()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 测试按钮区域 -->
+    <div class="test-section">
+        <h2 class="text-lg font-semibold mb-3">功能测试</h2>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="testAddFunction()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">测试添加API</button>
+            <button onclick="testEditFunction()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">测试编辑API</button>
+            <button onclick="testDeleteFunction()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">测试删除API</button>
+            <button onclick="testImportExportFunction()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">测试导入导出</button>
+            <button onclick="runAllTests()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">运行所有测试</button>
+        </div>
+    </div>
+
+    <script>
+        // 自定义API管理功能实现
+        let customAPIs = JSON.parse(localStorage.getItem('customAPIs')) || [];
+        let selectedAPIs = JSON.parse(localStorage.getItem('selectedAPIs')) || [];
+        let currentImportMode = 'file';
+        let editingIndex = -1;
+        
+        // Toast 消息显示函数
+        function showToast(message, type = 'info') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            document.getElementById('resultsList').appendChild(resultDiv);
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 渲染API列表
+        function renderApisList() {
+            const container = document.getElementById('apisList');
+            if (customAPIs.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 text-center py-4">暂无自定义API</div>';
+                return;
+            }
+            
+            container.innerHTML = customAPIs.map((api, index) => `
+                <div class="api-item flex items-center justify-between">
+                    <div class="flex items-center flex-1">
+                        <input type="checkbox" ${selectedAPIs.includes(index) ? 'checked' : ''} 
+                               onchange="toggleSelection(${index})" class="mr-3">
+                        <div class="flex-1">
+                            <div class="font-medium">${api.name} ${api.isAdult ? '<span class="text-pink-400 text-xs">[成人]</span>' : ''}</div>
+                            <div class="text-sm text-gray-400">${api.url}</div>
+                            ${api.detail ? `<div class="text-xs text-gray-500">Detail: ${api.detail}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editApi(${index})" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs">编辑</button>
+                        <button onclick="deleteApi(${index})" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">删除</button>
+                        <button onclick="testApi(${index})" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">测试</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 切换选择状态
+        function toggleSelection(index) {
+            const idx = selectedAPIs.indexOf(index);
+            if (idx > -1) {
+                selectedAPIs.splice(idx, 1);
+            } else {
+                selectedAPIs.push(index);
+            }
+            localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+        }
+        
+        // 全选/全不选
+        function selectAll(select) {
+            if (select) {
+                selectedAPIs = customAPIs.map((_, index) => index);
+            } else {
+                selectedAPIs = [];
+            }
+            localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+            renderApisList();
+            showToast(select ? '已全选所有API' : '已取消全选', 'info');
+        }
+        
+        // 显示/隐藏管理面板
+        function toggleManagementPanel() {
+            const toolbar = document.getElementById('managementToolbar');
+            toolbar.classList.toggle('hidden');
+            showToast(toolbar.classList.contains('hidden') ? '隐藏管理面板' : '显示管理面板', 'info');
+        }
+        
+        // 显示添加表单
+        function showAddForm() {
+            document.getElementById('addForm').classList.remove('hidden');
+            editingIndex = -1;
+            clearForm();
+            showToast('显示添加API表单', 'info');
+        }
+        
+        // 清空表单
+        function clearForm() {
+            document.getElementById('apiName').value = '';
+            document.getElementById('apiUrl').value = '';
+            document.getElementById('apiDetail').value = '';
+            document.getElementById('apiIsAdult').checked = false;
+        }
+        
+        // 取消添加
+        function cancelAdd() {
+            document.getElementById('addForm').classList.add('hidden');
+            editingIndex = -1;
+            showToast('取消添加API', 'info');
+        }
+        
+        // 添加API
+        function addApi() {
+            const name = document.getElementById('apiName').value.trim();
+            const url = document.getElementById('apiUrl').value.trim();
+            const detail = document.getElementById('apiDetail').value.trim();
+            const isAdult = document.getElementById('apiIsAdult').checked;
+            
+            if (!name || !url) {
+                showToast('请填写API名称和URL', 'error');
+                return;
+            }
+            
+            const newApi = { name, url, detail, isAdult };
+            
+            if (editingIndex >= 0) {
+                customAPIs[editingIndex] = newApi;
+                showToast(`更新API: ${name}`, 'success');
+            } else {
+                customAPIs.push(newApi);
+                showToast(`添加API: ${name}`, 'success');
+            }
+            
+            localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+            renderApisList();
+            cancelAdd();
+        }
+        
+        // 编辑API
+        function editApi(index) {
+            const api = customAPIs[index];
+            document.getElementById('apiName').value = api.name;
+            document.getElementById('apiUrl').value = api.url;
+            document.getElementById('apiDetail').value = api.detail || '';
+            document.getElementById('apiIsAdult').checked = api.isAdult || false;
+            
+            editingIndex = index;
+            document.getElementById('addForm').classList.remove('hidden');
+            showToast(`编辑API: ${api.name}`, 'info');
+        }
+        
+        // 删除API
+        function deleteApi(index) {
+            const api = customAPIs[index];
+            if (confirm(`确定删除API "${api.name}"？`)) {
+                customAPIs.splice(index, 1);
+                selectedAPIs = selectedAPIs.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+                localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+                localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+                renderApisList();
+                showToast(`删除API: ${api.name}`, 'success');
+            }
+        }
+        
+        // 删除选中的API
+        function deleteSelected() {
+            if (selectedAPIs.length === 0) {
+                showToast('请先选择要删除的API', 'warning');
+                return;
+            }
+            
+            if (confirm(`确定删除选中的 ${selectedAPIs.length} 个API？`)) {
+                const sortedIndices = selectedAPIs.sort((a, b) => b - a);
+                sortedIndices.forEach(index => {
+                    customAPIs.splice(index, 1);
+                });
+                selectedAPIs = [];
+                localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+                localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+                renderApisList();
+                showToast(`删除了 ${sortedIndices.length} 个API`, 'success');
+            }
+        }
+        
+        // 测试API
+        function testApi(index) {
+            const api = customAPIs[index];
+            showToast(`测试API: ${api.name} - ${api.url}`, 'info');
+            // 这里可以添加实际的API测试逻辑
+        }
+        
+        // 测试选中的API
+        function testSelected() {
+            if (selectedAPIs.length === 0) {
+                showToast('请先选择要测试的API', 'warning');
+                return;
+            }
+            
+            selectedAPIs.forEach(index => {
+                const api = customAPIs[index];
+                showToast(`测试API: ${api.name}`, 'info');
+            });
+        }
+        
+        // 导出API
+        function exportApis() {
+            if (customAPIs.length === 0) {
+                showToast('没有API可以导出', 'warning');
+                return;
+            }
+            
+            const exportData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                apis: customAPIs
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `custom-apis-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast(`导出了 ${customAPIs.length} 个API`, 'success');
+        }
+        
+        // 显示导入表单
+        function showImportForm() {
+            document.getElementById('importForm').classList.remove('hidden');
+            setImportMode('file');
+            showToast('显示导入API表单', 'info');
+        }
+        
+        // 设置导入模式
+        function setImportMode(mode) {
+            currentImportMode = mode;
+            const fileArea = document.getElementById('fileArea');
+            const textArea = document.getElementById('textArea');
+            const fileBtn = document.getElementById('modeFile');
+            const textBtn = document.getElementById('modeText');
+            
+            if (mode === 'file') {
+                fileArea.classList.remove('hidden');
+                textArea.classList.add('hidden');
+                fileBtn.className = 'px-3 py-1 bg-blue-600 text-white text-sm rounded';
+                textBtn.className = 'px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded';
+            } else {
+                fileArea.classList.add('hidden');
+                textArea.classList.remove('hidden');
+                fileBtn.className = 'px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded';
+                textBtn.className = 'px-3 py-1 bg-blue-600 text-white text-sm rounded';
+            }
+            
+            showToast(`切换到${mode === 'file' ? '文件' : '文本'}导入模式`, 'info');
+        }
+        
+        // 导入API
+        function importApis() {
+            try {
+                let jsonData;
+                
+                if (currentImportMode === 'file') {
+                    const fileInput = document.getElementById('fileInput');
+                    if (!fileInput.files[0]) {
+                        showToast('请选择要导入的文件', 'error');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            jsonData = JSON.parse(e.target.result);
+                            processImport(jsonData);
+                        } catch (error) {
+                            showToast('文件格式错误: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(fileInput.files[0]);
+                    return;
+                } else {
+                    const textInput = document.getElementById('textInput');
+                    if (!textInput.value.trim()) {
+                        showToast('请输入要导入的JSON数据', 'error');
+                        return;
+                    }
+                    
+                    jsonData = JSON.parse(textInput.value);
+                    processImport(jsonData);
+                }
+            } catch (error) {
+                showToast('导入失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 处理导入数据
+        function processImport(data) {
+            let apis = data.apis || data;
+            if (!Array.isArray(apis)) {
+                showToast('导入数据格式错误：应为API数组', 'error');
+                return;
+            }
+            
+            let addedCount = 0;
+            let skippedCount = 0;
+            
+            apis.forEach(api => {
+                if (!api.name || !api.url) {
+                    skippedCount++;
+                    return;
+                }
+                
+                // 检查是否已存在
+                const exists = customAPIs.some(existing => existing.name === api.name && existing.url === api.url);
+                if (exists) {
+                    skippedCount++;
+                    return;
+                }
+                
+                customAPIs.push({
+                    name: api.name,
+                    url: api.url,
+                    detail: api.detail || '',
+                    isAdult: api.isAdult || false
+                });
+                addedCount++;
+            });
+            
+            localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+            renderApisList();
+            cancelImport();
+            
+            showToast(`导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个`, 'success');
+        }
+        
+        // 取消导入
+        function cancelImport() {
+            document.getElementById('importForm').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+            document.getElementById('textInput').value = '';
+            showToast('取消导入API', 'info');
+        }
+        
+        // 测试函数
+        function testAddFunction() {
+            showToast('开始测试添加API功能', 'info');
+            
+            document.getElementById('apiName').value = '测试API';
+            document.getElementById('apiUrl').value = 'https://test.example.com';
+            document.getElementById('apiDetail').value = '/detail';
+            
+            showAddForm();
+            setTimeout(() => {
+                addApi();
+                showToast('添加API功能测试完成', 'success');
+            }, 1000);
+        }
+        
+        function testEditFunction() {
+            showToast('开始测试编辑API功能', 'info');
+            
+            if (customAPIs.length === 0) {
+                showToast('没有API可以编辑，请先添加API', 'warning');
+                return;
+            }
+            
+            editApi(0);
+            setTimeout(() => {
+                document.getElementById('apiName').value += ' (已编辑)';
+                addApi();
+                showToast('编辑API功能测试完成', 'success');
+            }, 1000);
+        }
+        
+        function testDeleteFunction() {
+            showToast('开始测试删除API功能', 'info');
+            
+            if (customAPIs.length === 0) {
+                showToast('没有API可以删除', 'warning');
+                return;
+            }
+            
+            const originalConfirm = window.confirm;
+            window.confirm = () => true; // 自动确认删除
+            
+            deleteApi(customAPIs.length - 1);
+            
+            window.confirm = originalConfirm; // 恢复原始confirm函数
+            showToast('删除API功能测试完成', 'success');
+        }
+        
+        function testImportExportFunction() {
+            showToast('开始测试导入导出功能', 'info');
+            
+            // 测试导出
+            if (customAPIs.length > 0) {
+                exportApis();
+            }
+            
+            // 测试导入界面
+            showImportForm();
+            setImportMode('text');
+            
+            // 模拟导入数据
+            const testData = {
+                apis: [
+                    { name: '导入测试API', url: 'https://import-test.com', detail: '/test', isAdult: false }
+                ]
+            };
+            
+            document.getElementById('textInput').value = JSON.stringify(testData);
+            
+            setTimeout(() => {
+                importApis();
+                showToast('导入导出功能测试完成', 'success');
+            }, 1000);
+        }
+        
+        function runAllTests() {
+            showToast('开始运行所有测试...', 'info');
+            
+            setTimeout(() => testAddFunction(), 500);
+            setTimeout(() => testEditFunction(), 2000);
+            setTimeout(() => testImportExportFunction(), 3500);
+            setTimeout(() => testDeleteFunction(), 5000);
+            setTimeout(() => showToast('所有测试完成！', 'success'), 6000);
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderApisList();
+            showToast('自定义API管理功能测试页面已加载', 'info');
+            showToast(`当前有 ${customAPIs.length} 个自定义API`, 'info');
+        });
+    </script>
+</body>
+</html>
