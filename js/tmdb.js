@@ -30,8 +30,13 @@ const tmdbTvTags = [
 
 // 当前状态
 let tmdbCurrentSwitch = 'movie'; // 'movie' 或 'tv'
-let tmdbCurrentTagIndex = 0;
+let tmdbCurrentTagIndex = 0;     // 顶部标签索引
+let tmdbCurrentGenreId = null;   // 当前选中的类型ID (互斥：选中类型时，tagIndex失效)
 let tmdbCurrentPage = 1;
+
+// 缓存 Genre 列表
+let tmdbMovieGenres = [];
+let tmdbTvGenres = [];
 
 // 初始化 TMDB 功能
 function initTMDB() {
@@ -78,7 +83,12 @@ function initTMDB() {
     // 渲染电影/电视剧切换
     renderTMDBMovieTvSwitch();
 
-    // 渲染标签
+    // 获取类型列表
+    fetchTMDBGenres().then(() => {
+        renderTMDBGenres(); // 渲染类型按钮
+    });
+
+    // 渲染常用标签
     renderTMDBTags();
 
     // 换一批按钮事件监听
@@ -86,7 +96,8 @@ function initTMDB() {
 
     // 初始加载热门内容
     if (localStorage.getItem('doubanEnabled') === 'true') {
-        renderTMDBRecommend();
+        // 稍微延迟加载内容，确保容器尺寸就绪，避免 lazy load 问题
+        setTimeout(renderTMDBRecommend, 100);
     }
 
     console.log('[TMDB] 初始化完成');
@@ -104,6 +115,10 @@ function updateTMDBVisibility() {
     // 只有在启用且没有搜索结果显示时才显示 TMDB 区域
     if (isEnabled && !isSearching) {
         doubanArea.classList.remove('hidden');
+        // 显示类型筛选器
+        const genreWrapper = document.getElementById('tmdb-genres-wrapper');
+        if (genreWrapper) genreWrapper.classList.remove('hidden');
+
         // 如果 TMDB 结果为空，重新加载
         const resultsContainer = document.getElementById('douban-results');
         if (resultsContainer && resultsContainer.children.length === 0) {
@@ -111,6 +126,8 @@ function updateTMDBVisibility() {
         }
     } else {
         doubanArea.classList.add('hidden');
+        const genreWrapper = document.getElementById('tmdb-genres-wrapper');
+        if (genreWrapper) genreWrapper.classList.add('hidden');
     }
 }
 
@@ -123,70 +140,126 @@ function renderTMDBMovieTvSwitch() {
 
     movieToggle.addEventListener('click', function () {
         if (tmdbCurrentSwitch !== 'movie') {
-            // 更新按钮样式
-            movieToggle.classList.add('bg-pink-600', 'text-white');
-            movieToggle.classList.remove('text-gray-300');
-
-            tvToggle.classList.remove('bg-pink-600', 'text-white');
-            tvToggle.classList.add('text-gray-300');
-
-            tmdbCurrentSwitch = 'movie';
-            tmdbCurrentTagIndex = 0;
-            tmdbCurrentPage = 1;
-
-            // 重新渲染标签和内容
-            renderTMDBTags();
-            setupTMDBRefreshBtn();
-
-            if (localStorage.getItem('doubanEnabled') === 'true') {
-                renderTMDBRecommend();
-            }
+            switchMediaType('movie', movieToggle, tvToggle);
         }
     });
 
     tvToggle.addEventListener('click', function () {
         if (tmdbCurrentSwitch !== 'tv') {
-            // 更新按钮样式
-            tvToggle.classList.add('bg-pink-600', 'text-white');
-            tvToggle.classList.remove('text-gray-300');
-
-            movieToggle.classList.remove('bg-pink-600', 'text-white');
-            movieToggle.classList.add('text-gray-300');
-
-            tmdbCurrentSwitch = 'tv';
-            tmdbCurrentTagIndex = 0;
-            tmdbCurrentPage = 1;
-
-            // 重新渲染标签和内容
-            renderTMDBTags();
-            setupTMDBRefreshBtn();
-
-            if (localStorage.getItem('doubanEnabled') === 'true') {
-                renderTMDBRecommend();
-            }
+            switchMediaType('tv', tvToggle, movieToggle);
         }
     });
 }
 
-// 渲染 TMDB 标签选择器
+// 切换媒体类型通用逻辑
+function switchMediaType(type, activeBtn, inactiveBtn) {
+    // 更新按钮样式
+    activeBtn.classList.add('bg-pink-600', 'text-white');
+    activeBtn.classList.remove('text-gray-300');
+
+    inactiveBtn.classList.remove('bg-pink-600', 'text-white');
+    inactiveBtn.classList.add('text-gray-300');
+
+    tmdbCurrentSwitch = type;
+    tmdbCurrentTagIndex = 0; // 重置回"热门"
+    tmdbCurrentGenreId = null; // 清除类型选择
+    tmdbCurrentPage = 1;
+
+    // 重新渲染标签和内容
+    renderTMDBTags();
+    renderTMDBGenres(); // 重新渲染对应的类型列表
+    setupTMDBRefreshBtn();
+
+    if (localStorage.getItem('doubanEnabled') === 'true') {
+        renderTMDBRecommend();
+    }
+}
+
+// 获取类型列表
+async function fetchTMDBGenres() {
+    try {
+        // 获取电影类型
+        if (tmdbMovieGenres.length === 0) {
+            const res = await fetch(`${TMDB_CONFIG.baseUrl}/genre/movie/list?language=${TMDB_CONFIG.language}`, {
+                headers: { 'Authorization': `Bearer ${TMDB_CONFIG.accessToken}` }
+            });
+            const data = await res.json();
+            tmdbMovieGenres = data.genres || [];
+        }
+
+        // 获取电视剧类型
+        if (tmdbTvGenres.length === 0) {
+            const res = await fetch(`${TMDB_CONFIG.baseUrl}/genre/tv/list?language=${TMDB_CONFIG.language}`, {
+                headers: { 'Authorization': `Bearer ${TMDB_CONFIG.accessToken}` }
+            });
+            const data = await res.json();
+            tmdbTvGenres = data.genres || [];
+        }
+    } catch (e) {
+        console.error('[TMDB] 获取类型列表失败', e);
+    }
+}
+
+// 渲染类型筛选按钮
+function renderTMDBGenres() {
+    const container = document.getElementById('tmdb-genres');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const genres = tmdbCurrentSwitch === 'movie' ? tmdbMovieGenres : tmdbTvGenres;
+
+    genres.forEach(g => {
+        const btn = document.createElement('button');
+        let btnClass = 'whitespace-nowrap px-3 py-1 text-xs rounded-full border transition-all duration-300 ';
+
+        if (tmdbCurrentGenreId === g.id) {
+            btnClass += 'bg-pink-600 text-white border-pink-500 shadow-md';
+        } else {
+            btnClass += 'bg-[#1a1a1a] text-gray-400 border-[#333] hover:border-gray-500 hover:text-white';
+        }
+
+        btn.className = btnClass;
+        btn.textContent = g.name;
+
+        btn.onclick = () => {
+            // 点击类型：激活类型，清除顶部标签选中状态
+            if (tmdbCurrentGenreId !== g.id) {
+                tmdbCurrentGenreId = g.id;
+                tmdbCurrentTagIndex = -1; // -1 表示不使用顶部常用标签
+                tmdbCurrentPage = 1;
+                renderTMDBTags();   // 更新顶部标签样式（变灰）
+                renderTMDBGenres(); // 更新自己高亮
+                renderTMDBRecommend();
+            } else {
+                // 再次点击取消筛选，回到默认热门
+                tmdbCurrentGenreId = null;
+                tmdbCurrentTagIndex = 0;
+                tmdbCurrentPage = 1;
+                renderTMDBTags();
+                renderTMDBGenres();
+                renderTMDBRecommend();
+            }
+        };
+
+        container.appendChild(btn);
+    });
+}
+
+// 渲染 TMDB 常用标签 (热门、即将上映等)
 function renderTMDBTags() {
     const tagContainer = document.getElementById('douban-tags');
     if (!tagContainer) return;
 
-    // 确定当前使用的标签列表
     const currentTags = tmdbCurrentSwitch === 'movie' ? tmdbMovieTags : tmdbTvTags;
 
-    // 清空标签容器
     tagContainer.innerHTML = '';
 
-    // 添加所有标签
     currentTags.forEach((tag, index) => {
         const btn = document.createElement('button');
 
-        // 设置样式
         let btnClass = 'py-1.5 px-3.5 rounded text-sm font-medium transition-all duration-300 border ';
 
-        // 当前选中的标签使用高亮样式
         if (index === tmdbCurrentTagIndex) {
             btnClass += 'bg-pink-600 text-white shadow-md border-white';
         } else {
@@ -199,9 +272,11 @@ function renderTMDBTags() {
         btn.onclick = function () {
             if (tmdbCurrentTagIndex !== index) {
                 tmdbCurrentTagIndex = index;
+                tmdbCurrentGenreId = null; // 清除类型筛选
                 tmdbCurrentPage = 1;
+                renderTMDBGenres(); // 清除类型高亮
+                renderTMDBTags();   // 高亮自己
                 renderTMDBRecommend();
-                renderTMDBTags();
             }
         };
 
@@ -216,7 +291,7 @@ function setupTMDBRefreshBtn() {
 
     btn.onclick = function () {
         tmdbCurrentPage++;
-        if (tmdbCurrentPage > 5) {
+        if (tmdbCurrentPage > 10) { // 增加翻页上限
             tmdbCurrentPage = 1;
         }
         renderTMDBRecommend();
@@ -230,7 +305,7 @@ async function renderTMDBRecommend() {
 
     // 显示加载动画
     const loadingOverlayHTML = `
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-10">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-10 min-h-[300px]">
             <div class="flex items-center justify-center">
                 <div class="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin inline-block"></div>
                 <span class="text-pink-500 ml-4">加载中...</span>
@@ -238,8 +313,13 @@ async function renderTMDBRecommend() {
         </div>
     `;
 
-    container.classList.add('relative');
-    container.insertAdjacentHTML('beforeend', loadingOverlayHTML);
+    // 只有当容器已经有内容时才加 overlay，否则直接显示 loading
+    if (container.children.length > 0) {
+        container.classList.add('relative');
+        container.insertAdjacentHTML('beforeend', loadingOverlayHTML);
+    } else {
+        container.innerHTML = loadingOverlayHTML;
+    }
 
     try {
         const data = await fetchTMDBData();
@@ -250,6 +330,7 @@ async function renderTMDBRecommend() {
             <div class="col-span-full text-center py-8">
                 <div class="text-red-400">❌ 获取 TMDB 数据失败，请稍后重试</div>
                 <div class="text-gray-500 text-sm mt-2">错误: ${error.message}</div>
+                <button onclick="renderTMDBRecommend()" class="mt-4 px-4 py-2 bg-[#333] hover:bg-[#444] rounded text-white text-sm">重试</button>
             </div>
         `;
     }
@@ -257,10 +338,21 @@ async function renderTMDBRecommend() {
 
 // 从 TMDB API 获取数据
 async function fetchTMDBData() {
-    const currentTags = tmdbCurrentSwitch === 'movie' ? tmdbMovieTags : tmdbTvTags;
-    const currentTag = currentTags[tmdbCurrentTagIndex];
+    let url = '';
+    const type = tmdbCurrentSwitch;
 
-    const url = `${TMDB_CONFIG.baseUrl}/${currentTag.endpoint}?language=${TMDB_CONFIG.language}&page=${tmdbCurrentPage}`;
+    // 模式 1: 按类型筛选 (Discover API)
+    if (tmdbCurrentGenreId) {
+        url = `${TMDB_CONFIG.baseUrl}/discover/${type}?language=${TMDB_CONFIG.language}&page=${tmdbCurrentPage}&with_genres=${tmdbCurrentGenreId}&sort_by=popularity.desc`;
+    }
+    // 模式 2: 常用标签 (Trending / Movie lists)
+    else {
+        const currentTags = type === 'movie' ? tmdbMovieTags : tmdbTvTags;
+        // 如果异常情况导致 index -1 且无 genre，默认回 0
+        const tagIndex = tmdbCurrentTagIndex >= 0 ? tmdbCurrentTagIndex : 0;
+        const currentTag = currentTags[tagIndex];
+        url = `${TMDB_CONFIG.baseUrl}/${currentTag.endpoint}?language=${TMDB_CONFIG.language}&page=${tmdbCurrentPage}`;
+    }
 
     console.log('[TMDB] 请求 URL:', url);
 
@@ -277,58 +369,52 @@ async function fetchTMDBData() {
     }
 
     const data = await response.json();
-    console.log('[TMDB] 获取到数据:', data.results?.length, '条');
     return data;
 }
 
 // 渲染 TMDB 卡片
 function renderTMDBCards(data, container) {
-    // 创建文档片段以提高性能
     const fragment = document.createDocumentFragment();
 
-    // 如果没有数据
     if (!data.results || data.results.length === 0) {
         const emptyEl = document.createElement('div');
         emptyEl.className = 'col-span-full text-center py-8';
         emptyEl.innerHTML = `
-            <div class="text-pink-500">❌ 暂无数据，请尝试其他分类或刷新</div>
+            <div class="text-pink-500">❌ 暂无该分类数据</div>
         `;
         fragment.appendChild(emptyEl);
     } else {
         // 只取前16条数据
         const items = data.results.slice(0, 16);
 
-        // 循环创建每个影视卡片
-        items.forEach(item => {
+        items.forEach((item, index) => {
             const card = document.createElement('div');
             card.className = 'bg-[#111] hover:bg-[#222] transition-all duration-300 rounded-lg overflow-hidden flex flex-col transform hover:scale-105 shadow-md hover:shadow-lg';
 
-            // 获取标题 (电影用 title, 电视剧用 name)
             const title = item.title || item.name || '未知标题';
             const safeTitle = title
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
 
-            // 获取评分
             const rating = item.vote_average ? item.vote_average.toFixed(1) : '暂无';
-
-            // 处理图片 URL
             const posterPath = item.poster_path;
             const coverUrl = posterPath
                 ? `${TMDB_CONFIG.imageBaseUrl}${posterPath}`
                 : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="%23333" width="300" height="450"/><text fill="%23666" font-size="20" x="150" y="225" text-anchor="middle">暂无图片</text></svg>';
 
-            // TMDB 详情页 URL
-            const tmdbType = tmdbCurrentSwitch === 'movie' ? 'movie' : 'tv';
+            const tmdbType = tmdbCurrentSwitch; // movie or tv
             const tmdbUrl = `https://www.themoviedb.org/${tmdbType}/${item.id}?language=zh-CN`;
 
-            // 生成卡片内容
+            // 修复 BUG: 前 8 张图片不使用 lazy loading，确保首屏可见
+            // 后面的图片使用 lazy loading
+            const loadingAttr = index < 8 ? '' : 'loading="lazy"';
+
             card.innerHTML = `
                 <div class="relative w-full aspect-[2/3] overflow-hidden cursor-pointer" onclick="fillAndSearchWithTMDB('${safeTitle}')">
                     <img src="${coverUrl}" alt="${safeTitle}" 
                         class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                        loading="lazy"
+                        ${loadingAttr}
                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22><rect fill=%22%23333%22 width=%22300%22 height=%22450%22/><text fill=%22%23666%22 font-size=%2220%22 x=%22150%22 y=%22225%22 text-anchor=%22middle%22>加载失败</text></svg>'">
                     <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
                     <div class="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-sm">
@@ -353,32 +439,21 @@ function renderTMDBCards(data, container) {
         });
     }
 
-    // 清空并添加所有新元素
     container.innerHTML = '';
     container.appendChild(fragment);
 }
 
-// 填充搜索框并执行搜索 (TMDB 版本)
+// 填充搜索框并执行搜索
 async function fillAndSearchWithTMDB(title) {
     if (!title) return;
+    const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-    // 安全处理标题，防止XSS
-    const safeTitle = title
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-
-    // 填充搜索框并执行搜索
     const input = document.getElementById('searchInput');
     if (input) {
         input.value = safeTitle;
-
-        // 检查是否有 search 函数
         if (typeof search === 'function') {
             await search();
         }
-
-        // 更新浏览器URL
         try {
             const encodedQuery = encodeURIComponent(safeTitle);
             window.history.pushState(
@@ -387,35 +462,24 @@ async function fillAndSearchWithTMDB(title) {
                 `/s=${encodedQuery}`
             );
             document.title = `搜索: ${safeTitle} - 朴朴TV`;
-        } catch (e) {
-            console.error('[TMDB] 更新浏览器历史失败:', e);
-        }
+        } catch (e) { console.error(e); }
 
-        // 移动端滚动到顶部
         if (window.innerWidth <= 768) {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 }
 
-// 重置到首页
 function resetToHomeTMDB() {
-    if (typeof resetSearchArea === 'function') {
-        resetSearchArea();
-    }
+    if (typeof resetSearchArea === 'function') resetSearchArea();
     updateTMDBVisibility();
 }
 
-// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function () {
-    // 延迟一点初始化，确保 DOM 完全加载
-    setTimeout(initTMDB, 100);
+    // 延迟初始化以兼容其他脚本
+    setTimeout(initTMDB, 150);
 });
 
-// 导出函数供全局使用
 window.initTMDB = initTMDB;
 window.updateTMDBVisibility = updateTMDBVisibility;
 window.fillAndSearchWithTMDB = fillAndSearchWithTMDB;
