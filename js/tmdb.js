@@ -399,23 +399,30 @@ function renderTMDBCards(data, container) {
 
             const rating = item.vote_average ? item.vote_average.toFixed(1) : '暂无';
             const posterPath = item.poster_path;
+
+            // 构建图片URL - 直接使用TMDB CDN
             const coverUrl = posterPath
                 ? `${TMDB_CONFIG.imageBaseUrl}${posterPath}`
-                : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="%23333" width="300" height="450"/><text fill="%23666" font-size="20" x="150" y="225" text-anchor="middle">暂无图片</text></svg>';
+                : '';
 
-            const tmdbType = tmdbCurrentSwitch; // movie or tv
+            // 占位图 - 使用encodeURIComponent确保正确编码
+            const placeholderSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="#1a1a1a" width="300" height="450"/><text fill="#666" font-size="16" x="150" y="225" text-anchor="middle">加载中...</text></svg>';
+            const placeholderUrl = 'data:image/svg+xml,' + encodeURIComponent(placeholderSvg);
+
+            const tmdbType = tmdbCurrentSwitch;
             const tmdbUrl = `https://www.themoviedb.org/${tmdbType}/${item.id}?language=zh-CN`;
 
-            // 修复 BUG: 前 8 张图片不使用 lazy loading，确保首屏可见
-            // 后面的图片使用 lazy loading
-            const loadingAttr = index < 8 ? '' : 'loading="lazy"';
+            // 创建图片元素，使用 JavaScript 控制加载
+            const imgId = `tmdb-img-${item.id}-${index}`;
 
             card.innerHTML = `
                 <div class="relative w-full aspect-[2/3] overflow-hidden cursor-pointer" onclick="fillAndSearchWithTMDB('${safeTitle}')">
-                    <img src="${coverUrl}" alt="${safeTitle}" 
+                    <img id="${imgId}" 
+                        src="${placeholderUrl}" 
+                        data-src="${coverUrl}"
+                        alt="${safeTitle}" 
                         class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                        ${loadingAttr}
-                        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22><rect fill=%22%23333%22 width=%22300%22 height=%22450%22/><text fill=%22%23666%22 font-size=%2220%22 x=%22150%22 y=%22225%22 text-anchor=%22middle%22>加载失败</text></svg>'">
+                        onclick="event.stopPropagation(); retryImageLoad(this);">
                     <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
                     <div class="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-sm">
                         <span class="text-yellow-400">★</span> ${rating}
@@ -441,7 +448,65 @@ function renderTMDBCards(data, container) {
 
     container.innerHTML = '';
     container.appendChild(fragment);
+
+    // 立即开始加载所有图片
+    setTimeout(() => {
+        loadTMDBImages();
+    }, 50);
 }
+
+// 加载所有 TMDB 图片
+function loadTMDBImages() {
+    const images = document.querySelectorAll('[id^="tmdb-img-"]');
+    images.forEach((img, index) => {
+        const realSrc = img.getAttribute('data-src');
+        if (!realSrc) return;
+
+        // 渐进式加载：前8张立即加载，后面的延迟
+        const delay = index < 8 ? 0 : (index - 8) * 100;
+
+        setTimeout(() => {
+            const testImg = new Image();
+            testImg.onload = () => {
+                img.src = realSrc;
+                img.classList.add('loaded');
+            };
+            testImg.onerror = () => {
+                // 图片加载失败，显示错误占位图
+                const errorSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="#222" width="300" height="450"/><text fill="#666" font-size="14" x="150" y="225" text-anchor="middle">加载失败</text></svg>';
+                img.src = 'data:image/svg+xml,' + encodeURIComponent(errorSvg);
+                img.setAttribute('data-failed', 'true');
+            };
+            testImg.src = realSrc;
+        }, delay);
+    });
+}
+
+// 重试加载单张图片
+function retryImageLoad(img) {
+    const realSrc = img.getAttribute('data-src');
+    if (!realSrc) return;
+
+    // 显示加载中
+    const loadingSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="#1a1a1a" width="300" height="450"/><text fill="#888" font-size="14" x="150" y="225" text-anchor="middle">重新加载中...</text></svg>';
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(loadingSvg);
+
+    setTimeout(() => {
+        const testImg = new Image();
+        testImg.onload = () => {
+            img.src = realSrc;
+            img.removeAttribute('data-failed');
+        };
+        testImg.onerror = () => {
+            const errorSvg2 = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"><rect fill="#222" width="300" height="450"/><text fill="#666" font-size="14" x="150" y="225" text-anchor="middle">加载失败</text></svg>';
+            img.src = 'data:image/svg+xml,' + encodeURIComponent(errorSvg2);
+        };
+        testImg.src = realSrc + '?retry=' + Date.now(); // 添加随机参数绕过缓存
+    }, 100);
+}
+
+// 导出重试函数
+window.retryImageLoad = retryImageLoad;
 
 // 填充搜索框并执行搜索
 async function fillAndSearchWithTMDB(title) {
